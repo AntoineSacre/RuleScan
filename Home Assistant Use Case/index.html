@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RuleScan — CRA Annex I Assessment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <script>
+    (function(){
+      var s = localStorage.getItem('pg-dark');
+      var sys = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (s === '1' || (s === null && sys)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper:   #f4f1ea;
+      --paper2:  #eae6db;
+      --ink:     #1a1714;
+      --ink2:    #3d3830;
+      --ink3:    #5c5750;
+      --grid:    rgba(0,0,0,.07);
+      --accent:  #b03228;
+      --blue-ui: #1c6ea4;
+      --blue:    #1a5c8a;
+      --green:   #1a5e36;
+      --amber:   #7a5200;
+      --line:    rgba(0,0,0,.14);
+      --shadow:  rgba(26,23,20,.18);
+    }
+    html.dark {
+      --paper:   #0f1117; --paper2:  #1a1d27; --ink:     #e2e8f0; --ink2:    #94a3b8;
+      --ink3:    #64748b; --grid:    rgba(46,51,82,.55); --accent:  #ef4444;
+      --blue-ui: #6366f1; --blue:    #818cf8; --green:   #22c55e; --amber:   #f59e0b;
+      --line:    #2e3352; --shadow:  rgba(0,0,0,.5);
+    }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      background-color: var(--paper);
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 56px 56px;
+      color: var(--ink); min-height: 100vh; transition: background-color .3s, color .3s;
+    }
+
+    /* ── CORNER MARKS ── */
+    .corner-marks { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .rcm { position: absolute; width: 14px; height: 14px; }
+    .rcm::before, .rcm::after { content: ''; position: absolute; }
+    .rcm-tl { top: 20px; left: 20px; } .rcm-tr { top: 20px; right: 20px; }
+    .rcm-bl { bottom: 20px; left: 20px; } .rcm-br { bottom: 20px; right: 20px; }
+    .rcm-tl::before, .rcm-tl::after, .rcm-tr::before, .rcm-tr::after { background: var(--blue-ui); }
+    .rcm-bl::before, .rcm-bl::after, .rcm-br::before, .rcm-br::after { background: var(--accent); }
+    .rcm::before { width: 1px; height: 100%; left: 50%; }
+    .rcm::after  { width: 100%; height: 1px; top: 50%; }
+    .reg-mark { display: inline-block; width: 6px; height: 6px; background: var(--blue-ui); flex-shrink: 0; }
+
+    /* ── PAGE ── */
+    .page { max-width: 1320px; margin: 0 auto; padding: 0 28px 100px; }
+
+    /* ── NAV ── */
+    nav { display: flex; align-items: center; border-bottom: 1px solid var(--ink); padding: 18px 0 14px; }
+    .nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.45rem; letter-spacing: .12em; color: var(--ink); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .nav-meta { font-size: 0.65rem; color: var(--ink3); letter-spacing: .1em; text-transform: uppercase; margin-left: 14px; padding-left: 14px; border-left: 1px solid var(--line); line-height: 1.3; }
+    .nav-meta strong { color: var(--ink2); display: block; }
+    .nav-links { display: flex; margin-left: auto; }
+    .nav-links a { font-size: 0.72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink2); text-decoration: none; padding: 6px 16px; border: 1px solid var(--line); border-right: none; transition: background .12s, color .12s; }
+    .nav-links a:first-child { border-radius: 4px 0 0 4px; }
+    .nav-links a:last-child  { border-right: 1px solid var(--line); border-radius: 0 4px 4px 0; }
+    .nav-links a:hover, .nav-links a.active { background: var(--blue-ui); color: var(--paper); border-color: var(--blue-ui); }
+    .mode-btn { font-family: 'Courier Prime', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border: 1px solid var(--ink2); background: transparent; color: var(--ink2); padding: 6px 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; border-radius: 4px; transition: background .12s, color .12s, border-color .12s; margin-left: 12px; }
+    .mode-btn:hover { background: var(--blue-ui); color: var(--paper); border-color: var(--blue-ui); }
+
+    /* ── HERO ── */
+    .hero { padding: 48px 0 32px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px; }
+    .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem, 7vw, 6rem); line-height: .92; letter-spacing: .04em; color: var(--ink); }
+    .hero-title em { color: var(--accent); font-style: normal; }
+    .hero-meta { font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); line-height: 1.8; text-align: right; }
+    .hero-meta strong { color: var(--ink2); display: block; }
+
+    /* ── RULE LINE ── */
+    .rule-line { display: flex; align-items: center; gap: 8px; margin: 28px 0; }
+    .rule-line hr { flex: 1; border: none; border-top: 1px solid var(--ink); }
+    .rule-label { font-size: 0.62rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); white-space: nowrap; }
+
+    /* ── CONNECTION BANNER ── */
+    .conn-flash { margin-bottom: 16px; padding: 10px 16px; font-size: 0.78rem; display: flex; align-items: center; gap: 8px; border: 1px solid; }
+    .conn-flash.offline { background: rgba(122,82,0,.06); border-color: var(--amber); color: var(--amber); }
+    .conn-flash.online  { background: rgba(26,94,54,.06);  border-color: var(--green); color: var(--green); }
+    .conn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .offline .conn-dot { background: var(--amber); }
+    .online  .conn-dot { background: var(--green); }
+
+    /* ── RUN ROW ── */
+    .run-row { border: 1px solid var(--ink); border-radius: 6px; box-shadow: 4px 5px 0 var(--shadow); display: flex; align-items: stretch; overflow: hidden; margin-bottom: 24px; }
+    .run-label { font-size: 0.62rem; letter-spacing: .16em; text-transform: uppercase; color: var(--paper); background: var(--blue-ui); padding: 0 14px; display: flex; align-items: center; writing-mode: vertical-rl; transform: rotate(180deg); }
+    .btn-run { flex: 1; font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: .15em; background: var(--accent); color: var(--paper); border: none; padding: 14px 20px; cursor: not-allowed; opacity: .4; text-align: left; display: flex; align-items: center; justify-content: space-between; }
+    .btn-run.active { cursor: pointer; opacity: 1; transition: background .15s; }
+    .btn-run.active:hover { background: #a93226; }
+    .btn-ghost { font-family: 'Courier Prime', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: transparent; color: var(--ink2); border: none; border-left: 1px solid var(--line); padding: 14px 18px; cursor: pointer; transition: background .12s, color .12s; white-space: nowrap; }
+    .btn-ghost:hover { background: var(--blue-ui); color: var(--paper); }
+
+    /* ── THREE-PANEL GRID ── */
+    .panel-grid { display: grid; grid-template-columns: 1.3fr 1.1fr 2fr; gap: 20px; align-items: start; }
+    @media (max-width: 1080px) { .panel-grid { grid-template-columns: 1fr; } }
+
+    /* ── FORM PANEL ── */
+    .form-panel { background: var(--paper); border: 1px solid var(--ink); border-radius: 6px; box-shadow: 4px 5px 0 var(--shadow); overflow: hidden; }
+    .panel-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px 10px; border-bottom: 1px solid var(--ink); }
+    .panel-step { font-size: 0.6rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink3); }
+    .panel-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; letter-spacing: .08em; color: var(--ink); }
+    .panel-body  { padding: 16px; }
+    .panel-hint  { font-size: 0.75rem; color: var(--ink3); margin-bottom: 14px; line-height: 1.55; }
+    .panel-note  { padding: 10px 16px; font-size: 0.72rem; color: var(--ink3); line-height: 1.5; border-top: 1px solid var(--line); background: var(--paper2); }
+
+    /* ── FORM INPUTS ── */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 0.62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); margin-bottom: 5px; }
+    .field input[type="text"],
+    .field input[type="password"] {
+      width: 100%; font-family: 'Courier Prime', monospace; font-size: 0.85rem;
+      background: var(--paper2); border: 1px solid var(--ink2); color: var(--ink);
+      padding: 8px 12px; border-radius: 4px; outline: none; transition: border-color .15s;
+    }
+    .field input:focus { border-color: var(--ink); }
+    .field-hint { font-size: 0.68rem; color: var(--ink3); margin-top: 4px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Advanced toggle */
+    .adv-toggle { font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); cursor: pointer; display: flex; align-items: center; gap: 5px; border: none; background: none; margin-bottom: 10px; padding: 0; font-family: 'Courier Prime', monospace; }
+    .adv-toggle:hover { color: var(--blue-ui); }
+    .adv-content { display: none; }
+    .adv-content.open { display: block; }
+
+    /* ── YES / NO SELECTOR ── */
+    .yn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--paper2); border: 1px solid var(--ink2); border-radius: 5px; padding: 3px; margin-bottom: 4px; }
+    .yn-btn { font-family: 'Courier Prime', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border: none; background: transparent; color: var(--ink2); padding: 7px 10px; cursor: pointer; border-radius: 4px; transition: background .12s, color .12s; }
+    .yn-btn.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
+
+    /* ── LEVEL SELECTOR ── */
+    .level-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: var(--paper2); border: 1px solid var(--ink2); border-radius: 5px; padding: 3px; }
+    .level-btn { font-family: 'Courier Prime', monospace; font-size: 0.68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: none; background: transparent; color: var(--ink2); padding: 7px 4px; cursor: pointer; border-radius: 4px; transition: background .12s, color .12s; text-align: center; }
+    .level-btn.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
+
+    /* Operand question row */
+    .op-row { margin-bottom: 14px; }
+    .op-row:last-child { margin-bottom: 0; }
+    .op-q { font-size: 0.78rem; color: var(--ink2); margin-bottom: 6px; line-height: 1.45; }
+    .op-id { font-family: 'Courier Prime', monospace; font-size: 0.65rem; color: var(--ink3); display: block; margin-bottom: 5px; }
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; padding: 2px 7px; font-size: 0.62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border: 1px solid; white-space: nowrap; }
+    .badge-green  { color: var(--green);  border-color: var(--green);  background: rgba(26,94,54,.07); }
+    .badge-red    { color: var(--accent); border-color: var(--accent); background: rgba(176,50,40,.07); }
+    .badge-amber  { color: var(--amber);  border-color: var(--amber);  background: rgba(122,82,0,.07); }
+    .badge-blue   { color: var(--blue);   border-color: var(--blue);   background: rgba(26,92,138,.07); }
+    .badge-gray   { color: var(--ink2);   border-color: var(--ink3);   background: transparent; }
+    .badge-outline{ color: var(--ink2);   border-color: var(--line);   background: transparent; font-family: 'Courier Prime', monospace; font-size: 0.7rem; letter-spacing: 0; text-transform: none; font-weight: 400; }
+    html.dark .badge-green  { background: rgba(34,197,94,.15);  color: #4ade80; border-color: rgba(34,197,94,.3); }
+    html.dark .badge-red    { background: rgba(239,68,68,.15);  color: #f87171; border-color: rgba(239,68,68,.3); }
+    html.dark .badge-amber  { background: rgba(245,158,11,.15); color: #fbbf24; border-color: rgba(245,158,11,.3); }
+    html.dark .badge-blue   { background: rgba(99,102,241,.15); color: #818cf8; border-color: rgba(99,102,241,.3); }
+    html.dark .badge-gray   { background: rgba(148,163,184,.1); color: #94a3b8; border-color: #2e3352; }
+    html.dark .badge-outline{ color: #94a3b8; border-color: #2e3352; }
+
+    /* ── RESULTS PANEL ── */
+    .stamp-wrap { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; }
+    .stamp { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: .2em; padding: 8px 16px; border: 3px solid; display: inline-block; position: relative; }
+    .stamp.allow { color: var(--green); border-color: var(--green); transform: rotate(-2.5deg); }
+    .stamp.deny  { color: var(--accent); border-color: var(--accent); transform: rotate(1.8deg); }
+    .stamp::after { content: ''; position: absolute; inset: 4px; border: 1px solid currentColor; opacity: .3; }
+    .stamp-meta { font-size: 0.68rem; color: var(--ink3); line-height: 1.7; }
+    .stamp-meta strong { display: block; color: var(--ink); font-size: 0.78rem; }
+
+    .stats-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 14px; border-bottom: 1px solid var(--line); }
+    .stat-cell { background: var(--paper2); padding: 12px 8px 10px; text-align: center; border: 1px solid var(--ink); border-radius: 4px; box-shadow: 2px 3px 0 var(--shadow); }
+    .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; line-height: 1; letter-spacing: .04em; }
+    .stat-label { font-size: 0.58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); margin-top: 3px; }
+    .s-total .stat-value { color: var(--ink); }
+    .s-ok    .stat-value { color: var(--green); }
+    .s-bad   .stat-value { color: var(--accent); }
+    .s-na    .stat-value { color: var(--ink3); }
+
+    .rule-table { width: 100%; border-collapse: collapse; }
+    .rule-table th { text-align: left; padding: 8px 12px; background: var(--paper2); border-bottom: 1px solid var(--ink); font-size: 0.6rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); font-weight: 400; }
+    .rule-table td { padding: 6px 12px; border-bottom: 1px solid var(--line); font-size: 0.78rem; }
+    .rule-table tr:last-child td { border-bottom: none; }
+    .rule-table tr.row-ok  td:first-child { border-left: 2px solid var(--green); }
+    .rule-table tr.row-bad td:first-child { border-left: 2px solid var(--accent); }
+    .rule-id { font-family: 'Courier Prime', monospace; font-size: 0.72rem; color: var(--ink2); }
+
+    /* Empty / placeholder state */
+    .result-placeholder { padding: 48px 24px; text-align: center; }
+    .result-placeholder .ph-icon { font-size: 2.5rem; opacity: .25; margin-bottom: 12px; }
+    .result-placeholder .ph-text { font-size: 0.78rem; color: var(--ink3); line-height: 1.6; }
+    .result-placeholder .ph-label { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: .1em; color: var(--ink3); display: block; margin-bottom: 6px; }
+
+    /* Example tag */
+    .example-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.65rem; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); border: 1px solid var(--amber); padding: 3px 10px; margin: 10px 16px 0; background: rgba(122,82,0,.05); }
+
+    /* ── SENSITIVITY (inside results panel, below rule table) ── */
+    .sens-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px 8px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); background: var(--paper2); }
+    .sens-title { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: .08em; color: var(--ink); }
+    .sens-table { width: 100%; border-collapse: collapse; }
+    .sens-table th { text-align: left; padding: 7px 12px; background: var(--paper2); border-bottom: 1px solid var(--line); font-size: 0.6rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); font-weight: 400; }
+    .sens-table td { padding: 7px 12px; border-bottom: 1px solid var(--line); font-size: 0.78rem; }
+    .sens-table tr:last-child td { border-bottom: none; }
+    .sens-table tr.current-row td { background: rgba(28,110,164,.06); }
+    .sens-table tr.current-row td:first-child { border-left: 2px solid var(--blue-ui); }
+
+    /* ── COLLAPSIBLE SECTIONS ── */
+    .section-toggle { display: flex; align-items: center; border: 1px solid var(--ink); border-bottom: none; margin-top: 24px; border-radius: 6px 6px 0 0; cursor: pointer; user-select: none; }
+    .section-toggle[aria-expanded="false"] { border-bottom: 1px solid var(--ink); border-radius: 6px; box-shadow: 4px 5px 0 var(--shadow); }
+    .section-mark { background: var(--ink); color: var(--paper); padding: 10px 16px; font-size: 0.65rem; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+    .section-toggle:hover .section-mark { background: var(--blue-ui); }
+    .section-title-txt { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: .1em; padding: 8px 18px; color: var(--ink); flex: 1; }
+    .toggle-icon { font-size: 0.7rem; padding: 8px 14px; border-left: 1px solid var(--line); color: var(--ink2); transition: transform .2s; }
+    .section-toggle[aria-expanded="false"] .toggle-icon { transform: rotate(-90deg); }
+    .panel-collapsible { overflow: hidden; }
+    .panel-table-wrap { border: 1px solid var(--ink); border-top: none; border-radius: 0 0 6px 6px; box-shadow: 4px 5px 0 var(--shadow); overflow-x: auto; background: var(--paper); }
+
+    /* ── DOC CONTENT ── */
+    .doc-content { padding: 20px 24px; }
+    .doc-content p  { font-size: 0.85rem; color: var(--ink2); margin-bottom: 10px; line-height: 1.7; }
+    .doc-content h3 { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: .1em; color: var(--ink); margin: 16px 0 8px; }
+    .doc-content ul { padding-left: 20px; font-size: 0.85rem; color: var(--ink2); line-height: 1.8; }
+    .doc-content li { margin-bottom: 4px; }
+    .doc-content code { background: var(--paper2); border: 1px solid var(--line); padding: 1px 5px; border-radius: 3px; font-size: 0.8rem; }
+    .doc-content pre { background: var(--paper2); border: 1px solid var(--line); border-radius: 4px; padding: 12px 16px; font-size: 0.8rem; overflow-x: auto; margin: 8px 0; }
+    .doc-content pre code { background: none; border: none; padding: 0; }
+
+    .step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+    .step-num { background: var(--ink); color: var(--paper); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+
+    .file-tree { background: var(--paper2); border: 1px solid var(--ink); border-radius: 4px; padding: 14px 18px; font-size: 0.82rem; line-height: 1.9; }
+    .ft-dir { color: var(--blue); } .ft-file { color: var(--green); } .ft-note { color: var(--ink3); }
+
+    .doc-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 10px 0; }
+    .doc-table th { text-align: left; padding: 7px 12px; background: var(--paper2); border-bottom: 1px solid var(--ink); font-size: 0.6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); font-weight: 400; }
+    .doc-table td { padding: 7px 12px; border-bottom: 1px solid var(--line); color: var(--ink2); }
+    .doc-table tr:last-child td { border-bottom: none; }
+    .doc-table code { background: var(--paper2); border: 1px solid var(--line); padding: 1px 4px; border-radius: 3px; font-size: 0.78rem; }
+
+    /* ── REGULATION LIBRARY ── */
+    .lib-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 8px; }
+    @media (max-width: 800px) { .lib-grid { grid-template-columns: 1fr 1fr; } }
+    .lib-card {
+      background: var(--paper2); padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 4px;
+      position: relative; border: 1px solid var(--ink2);
+      border-radius: 5px; box-shadow: 2px 3px 0 var(--shadow);
+      opacity: .38; cursor: not-allowed;
+    }
+    .lib-card.selected {
+      background: var(--blue-ui); border-color: var(--blue-ui);
+      opacity: 1; cursor: default;
+    }
+    .lib-card.selected .lib-name,
+    .lib-card.selected .lib-desc { color: var(--paper); }
+    .lib-name { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: .06em; color: var(--ink); }
+    .lib-desc { font-size: 0.68rem; color: var(--ink3); letter-spacing: .04em; line-height: 1.4; }
+    .lib-tag { position: absolute; top: 6px; right: 8px; font-size: 0.58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); border: 1px solid var(--ink3); padding: 1px 5px; }
+
+    .footer-line { display: flex; align-items: center; gap: 8px; margin-top: 60px; }
+    .footer-line hr { flex: 1; border: none; border-top: 1px solid var(--line); }
+  </style>
+</head>
+<body>
+
+<div class="corner-marks" aria-hidden="true">
+  <div class="rcm rcm-tl"></div><div class="rcm rcm-tr"></div>
+  <div class="rcm rcm-bl"></div><div class="rcm rcm-br"></div>
+</div>
+
+<div class="page">
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-brand" href="#">
+      <span class="reg-mark"></span>
+      RULESCAN
+    </a>
+    <div class="nav-meta">
+      Automated Compliance Evaluation<br>
+      <strong>CRA ANNEX I</strong>
+    </div>
+    <div class="nav-links">
+      <a href="/" >ENGINE</a>
+      <a href="#" class="active">CRA ASSESSMENT</a>
+    </div>
+    <button class="mode-btn" onclick="toggleDark()">
+      <span id="modeIcon">◑</span>
+      <span id="modeLabel">DARK</span>
+    </button>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-title">
+        CRA ANNEX I<br>
+        <em>AUTOMATED</em><br>
+        ASSESSMENT
+      </div>
+    </div>
+    <div class="hero-meta">
+      Assess any GitHub-hosted project<br>
+      against the EU Cyber Resilience Act.<br>
+      <strong>25 of 29 operands collected automatically.</strong>
+      4 require manual input below.
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="rule-line" style="margin-top:32px;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">How It Works</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+  <div style="font-size:0.85rem; color:var(--ink2); line-height:1.75; max-width:900px; margin-bottom:32px;">
+    The engine assesses any public GitHub repository against CRA Annex I by collecting 29 operand values and evaluating them against a formal policy model. Of the 29 operands, <strong style="color:var(--ink);">25 are collected automatically</strong> from GitHub's public API — repository metadata, release history, advisory feeds, file presence, CI configuration. The remaining <strong style="color:var(--ink);">4 require manual input</strong> from someone with knowledge of the project. Under the hood, the engine calls <code style="background:var(--paper2);border:1px solid var(--line);padding:1px 5px;border-radius:3px;font-size:0.8rem;">collect.py</code> with your repository parameters, then submits the collected data to OPA running the CRA Annex I policy. Results are returned as a rule-level compliance report in under a minute.
+  </div>
+
+  <!-- REGULATION SELECTOR -->
+  <div class="rule-line" style="margin-top:0;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Regulatory Framework</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+  <div class="lib-grid">
+    <div class="lib-card selected">
+      <div class="lib-name">CRA</div>
+      <div class="lib-desc">EU Cyber Resilience Act, Annex I — 21 rules</div>
+    </div>
+    <div class="lib-card">
+      <div class="lib-name">ISO 27001</div>
+      <div class="lib-desc">Information Security Management</div>
+      <span class="lib-tag">Coming soon</span>
+    </div>
+    <div class="lib-card">
+      <div class="lib-name">DORA</div>
+      <div class="lib-desc">Digital Operational Resilience Act</div>
+      <span class="lib-tag">Coming soon</span>
+    </div>
+    <div class="lib-card">
+      <div class="lib-name">NIS2</div>
+      <div class="lib-desc">Network &amp; Information Security</div>
+      <span class="lib-tag">Coming soon</span>
+    </div>
+  </div>
+
+  <!-- ASSESSMENT FORM -->
+  <div class="rule-line" style="margin-top:20px;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Input Configuration</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+  <div class="conn-flash offline" id="connBanner">
+    <div class="conn-dot"></div>
+    <span>Assessment engine offline — results below are pre-computed for Home Assistant Core 2026.6.1. Start the engine (<code style="background:rgba(122,82,0,.1);border:1px solid var(--amber);padding:1px 4px;border-radius:3px;font-size:0.75rem;">docker compose up -d</code> then <code style="background:rgba(122,82,0,.1);border:1px solid var(--amber);padding:1px 4px;border-radius:3px;font-size:0.75rem;">./mvnw spring-boot:run</code>) to enable live evaluation.</span>
+  </div>
+
+  <div class="run-row">
+    <div class="run-label">Action</div>
+    <button class="btn-run" id="runBtn" disabled>
+      RUN CRA ASSESSMENT
+      <span style="font-size:1.1rem;font-family:monospace;">→</span>
+    </button>
+    <button class="btn-ghost" id="resetBtn" onclick="resetToHA()">↺ LOAD HA EXAMPLE</button>
+  </div>
+
+  <div class="panel-grid">
+
+    <!-- PANEL 1: Repository configuration -->
+    <div class="form-panel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-step">Step 01 /</span>
+        <span class="panel-title">GitHub Repository</span>
+      </div>
+      <div class="panel-body">
+        <p class="panel-hint">Enter the GitHub repository to assess. The engine will collect 25 operand values automatically from the public API.</p>
+
+        <div class="field field-row">
+          <div>
+            <label>Owner</label>
+            <input type="text" id="owner" placeholder="home-assistant" value="home-assistant">
+          </div>
+          <div>
+            <label>Repository</label>
+            <input type="text" id="repo" placeholder="core" value="core">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>GitHub Token <span style="color:var(--ink3);font-size:0.6rem;">(optional — avoids rate limiting)</span></label>
+          <input type="password" id="token" placeholder="ghp_...">
+          <div class="field-hint">Without a token: 60 req/hour. With a token: 5,000 req/hour.</div>
+        </div>
+
+        <button class="adv-toggle" onclick="toggleAdv(this)">▸ Advanced path parameters</button>
+        <div class="adv-content" id="advPanel">
+          <div class="field">
+            <label>Config entries path</label>
+            <input type="text" id="configPath" placeholder="homeassistant/config_entries.py" value="homeassistant/config_entries.py">
+          </div>
+          <div class="field">
+            <label>Authentication module path</label>
+            <input type="text" id="authPath" placeholder="homeassistant/components/auth/__init__.py" value="homeassistant/components/auth/__init__.py">
+          </div>
+          <div class="field">
+            <label>Components directory</label>
+            <input type="text" id="componentsDir" placeholder="homeassistant/components" value="homeassistant/components">
+          </div>
+          <div class="field">
+            <label>CI security workflow</label>
+            <input type="text" id="ciWorkflow" placeholder=".github/workflows/codeql.yml" value=".github/workflows/codeql.yml">
+          </div>
+        </div>
+      </div>
+      <div class="panel-note">
+        <span class="badge badge-blue" style="margin-right:4px;">A1</span> GitHub API heuristics &nbsp;
+        <span class="badge badge-green">A2</span> file-presence checks
+      </div>
+    </div>
+
+    <!-- PANEL 2: Manual operands -->
+    <div class="form-panel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-step">Step 02 /</span>
+        <span class="panel-title">Manual Assessment</span>
+      </div>
+      <div class="panel-body">
+        <p class="panel-hint">Four operands cannot be derived automatically. Answer based on your knowledge of the project.</p>
+
+        <div class="op-row">
+          <span class="op-id">product/has-control-access-mecanism</span>
+          <div class="op-q">Does the product implement an access control mechanism (e.g. authentication, role separation)?</div>
+          <div class="yn-group" id="yn-acm">
+            <button class="yn-btn" onclick="setYN('yn-acm',this,'op-acm',true)">YES</button>
+            <button class="yn-btn active" onclick="setYN('yn-acm',this,'op-acm',false)">NO</button>
+          </div>
+          <input type="hidden" id="op-acm" value="false">
+        </div>
+
+        <div class="op-row">
+          <span class="op-id">product/availability-of-essential-func</span>
+          <div class="op-q">Does the product ensure the availability of its essential functions even under adverse conditions?</div>
+          <div class="yn-group" id="yn-avail">
+            <button class="yn-btn" onclick="setYN('yn-avail',this,'op-avail',true)">YES</button>
+            <button class="yn-btn active" onclick="setYN('yn-avail',this,'op-avail',false)">NO</button>
+          </div>
+          <input type="hidden" id="op-avail" value="false">
+        </div>
+
+        <div class="op-row">
+          <span class="op-id">product/minimise-availability-issue</span>
+          <div class="op-q">Does the product minimise disruption caused by failures in external services it depends on?</div>
+          <div class="yn-group" id="yn-min">
+            <button class="yn-btn active" onclick="setYN('yn-min',this,'op-min',true)">YES</button>
+            <button class="yn-btn" onclick="setYN('yn-min',this,'op-min',false)">NO</button>
+          </div>
+          <input type="hidden" id="op-min" value="true">
+        </div>
+
+        <div class="op-row">
+          <span class="op-id">product/cybersecurity-level</span>
+          <div class="op-q">What is the product's cybersecurity classification?</div>
+          <div class="level-group" id="lvl-cyber">
+            <button class="level-btn active" onclick="setLevel('lvl-cyber',this,'op-cyber',1)">1 — Low</button>
+            <button class="level-btn" onclick="setLevel('lvl-cyber',this,'op-cyber',3)">3 — Moderate</button>
+            <button class="level-btn" onclick="setLevel('lvl-cyber',this,'op-cyber',5)">5 — High</button>
+          </div>
+          <input type="hidden" id="op-cyber" value="1">
+        </div>
+
+        <div class="op-row" style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);">
+          <span class="op-id">values/appropriate-level <span class="badge badge-gray" style="margin-left:4px;">regulatory</span></span>
+          <div class="op-q">What threshold should the engine use to decide if the cybersecurity level is sufficient?</div>
+          <div class="level-group" id="lvl-approp">
+            <button class="level-btn" onclick="setLevel('lvl-approp',this,'op-approp',1)">1 — Low</button>
+            <button class="level-btn active" onclick="setLevel('lvl-approp',this,'op-approp',3)">3 — Moderate</button>
+            <button class="level-btn" onclick="setLevel('lvl-approp',this,'op-approp',5)">5 — High</button>
+          </div>
+          <input type="hidden" id="op-approp" value="3">
+        </div>
+      </div>
+      <div class="panel-note">
+        <span class="badge badge-amber" style="margin-right:4px;">M</span> manual input &nbsp;
+        <span class="badge badge-gray">R</span> regulatory threshold
+      </div>
+    </div>
+
+    <!-- PANEL 3: Assessment results -->
+    <div class="form-panel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-step">Step 03 /</span>
+        <span class="panel-title">Assessment Results</span>
+      </div>
+
+      <!-- Example tag -->
+      <div class="example-tag">★ Example — Home Assistant Core 2026.6.1</div>
+
+      <!-- Verdict -->
+      <div class="stamp-wrap">
+        <div class="stamp deny">NON-COMPLIANT</div>
+        <div class="stamp-meta">
+          <strong>One or more rules violated.</strong>
+          All 21 rules active · 17 satisfied · 4 violated
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat-cell s-total"><div class="stat-value">21</div><div class="stat-label">Active</div></div>
+        <div class="stat-cell s-ok">   <div class="stat-value">17</div><div class="stat-label">Satisfied</div></div>
+        <div class="stat-cell s-bad">  <div class="stat-value">4</div> <div class="stat-label">Violated</div></div>
+        <div class="stat-cell s-na">   <div class="stat-value">0</div> <div class="stat-label">Missing</div></div>
+      </div>
+
+      <!-- Rule table -->
+      <table class="rule-table">
+        <thead><tr><th>Rule ID</th><th style="width:120px;text-align:center;">Status</th></tr></thead>
+        <tbody>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:1:rule</td>   <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:2:a:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:2:b:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:2:c:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:2:d:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:2:e:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:3:a:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-bad"><td class="rule-id">cra:annex:i:p1:3:b:rule</td> <td style="text-align:center;"><span class="badge badge-red">Violated</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:3:c:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:3:d:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:3:e:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-bad"><td class="rule-id">cra:annex:i:p1:3:f:rule</td> <td style="text-align:center;"><span class="badge badge-red">Violated</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:3:g:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-bad"><td class="rule-id">cra:annex:i:p1:3:h:rule</td> <td style="text-align:center;"><span class="badge badge-red">Violated</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:3:i:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:3:j:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p1:3:k:rule</td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p2:4:rule</td>   <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p2:5:rule</td>   <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id">cra:annex:i:p2:6:rule</td>   <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-bad"><td class="rule-id">cra:annex:i:p2:7:rule</td>   <td style="text-align:center;"><span class="badge badge-red">Violated</span></td></tr>
+        </tbody>
+      </table>
+
+    </div>
+
+  </div><!-- /panel-grid -->
+
+  <!-- DOCUMENTATION -->
+  <div class="rule-line" style="margin-top:40px;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Documentation</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+  <!-- 01 Quick start -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+    <span class="section-mark">01</span>
+    <span class="section-title-txt">Command-Line Quick Start</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible">
+    <div class="panel-table-wrap">
+      <div class="doc-content">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <h3>Optional — set your GitHub token</h3>
+            <p>Without a token, GitHub limits unauthenticated requests to 60/hour. A token with no special scopes raises this to 5,000/hour.</p>
+            <pre><code>export GITHUB_TOKEN=ghp_...</code></pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <h3>Optional — start OPA for automated assessment</h3>
+            <p>Start OPA from the repository root. Without it, the script collects data only and skips evaluation.</p>
+            <pre><code>docker compose up -d   # run from the repository root</code></pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <h3>Run the use case</h3>
+            <pre><code>cd "Home Assistant Use Case"
+./run.sh</code></pre>
+            <p>Collects all 29 operands, writes a timestamped data file to <code>output/</code>, and — if OPA is running — prints the compliance verdict.</p>
+          </div>
+        </div>
+        <h3>Expected output</h3>
+        <pre><code>CRA Annex I data collection — home-assistant/core
+============================================================
+  [A1     ] product/has-digital-element ... true
+  [A1     ] product/has-available-security-updates ... true
+  ...
+  [MANUAL ] product/has-control-access-mecanism = false
+============================================================
+Collected : 29 / 29 operands
+Output    : output/CRA-Data-2026-06-11_14-32-01.json
+
+Assessment
+============================================================
+Verdict   : NON-COMPLIANT
+Active    : 21 rules triggered
+Satisfied : 17
+Violated  : 4
+
+Violated obligations:
+  - cra:annex:i:p1:3:b:rule
+  - cra:annex:i:p1:3:f:rule
+  - cra:annex:i:p1:3:h:rule
+  - cra:annex:i:p2:7:rule
+============================================================</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 Adapting -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+    <span class="section-mark">02</span>
+    <span class="section-title-txt">Adapting to Another Project</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible">
+    <div class="panel-table-wrap">
+      <div class="doc-content">
+        <p>To assess a different GitHub repository from the command line, update two files.</p>
+        <h3>1. config.env — GitHub identifiers and repository paths</h3>
+        <table class="doc-table">
+          <thead><tr><th>Parameter</th><th>Description</th><th>HA default</th></tr></thead>
+          <tbody>
+            <tr><td><code>OWNER</code></td><td>GitHub organisation or user</td><td>home-assistant</td></tr>
+            <tr><td><code>REPO</code></td><td>Repository name</td><td>core</td></tr>
+            <tr><td><code>ORG</code></td><td>Organisation for org-level checks</td><td>home-assistant</td></tr>
+            <tr><td><code>ASSESSMENT_DATE</code></td><td>ISO date of the assessment</td><td>2026-06-11</td></tr>
+            <tr><td><code>CONFIG_ENTRIES_PATH</code></td><td>Configuration entry point</td><td>homeassistant/config_entries.py</td></tr>
+            <tr><td><code>AUTH_PATH</code></td><td>Authentication module</td><td>homeassistant/components/auth/__init__.py</td></tr>
+            <tr><td><code>COMPONENTS_DIR</code></td><td>Integration subdirectory root</td><td>homeassistant/components</td></tr>
+            <tr><td><code>CI_SECURITY_WORKFLOW</code></td><td>CI security scanning workflow</td><td>.github/workflows/codeql.yml</td></tr>
+          </tbody>
+        </table>
+        <h3>2. collection-method-manual.json — manually assessed operands</h3>
+        <pre><code>{
+  "product/has-control-access-mecanism": "false",
+  "product/availability-of-essential-function": "false",
+  "product/minimise-availability-issue-on-external-services": "true",
+  "values/appropriate-level": 3
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 File structure -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+    <span class="section-mark">03</span>
+    <span class="section-title-txt">File Structure</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible">
+    <div class="panel-table-wrap">
+      <div class="doc-content">
+        <div class="file-tree">
+          <span class="ft-dir">Home Assistant Use Case/</span><br>
+          &nbsp;&nbsp;<span class="ft-file">run.sh</span>                          <span class="ft-note">— entry point</span><br>
+          &nbsp;&nbsp;<span class="ft-file">collect.py</span>                       <span class="ft-note">— collection runner</span><br>
+          &nbsp;&nbsp;<span class="ft-file">config.env</span>                       <span class="ft-note">— project parameters</span><br>
+          &nbsp;&nbsp;<span class="ft-file">collection-method-automated.json</span> <span class="ft-note">— 29 automated heuristics</span><br>
+          &nbsp;&nbsp;<span class="ft-file">collection-method-manual.json</span>    <span class="ft-note">— 4 manually assessed operands</span><br>
+          &nbsp;&nbsp;<span class="ft-file">policy.json</span>                      <span class="ft-note">— CRA Annex I policy (21 rules)</span><br>
+          &nbsp;&nbsp;<span class="ft-dir">output/</span>                          <span class="ft-note">— generated data files</span><br>
+          &nbsp;&nbsp;<span class="ft-file">index.html</span>                       <span class="ft-note">— this page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 Prerequisites -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+    <span class="section-mark">04</span>
+    <span class="section-title-txt">Prerequisites</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible">
+    <div class="panel-table-wrap">
+      <div class="doc-content">
+        <ul>
+          <li><code>bash</code>, <code>curl</code>, <code>jq</code>, <code>python3</code> — standard on macOS and most Linux distributions</li>
+          <li>Docker — only required for the automated assessment step (OPA)</li>
+          <li>A GitHub personal access token — optional but strongly recommended to avoid rate limiting</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-line">
+    <span class="reg-mark"></span>
+    <span class="rule-label">RuleScan — CRA Annex I Use Case · University of Namur / Comexis Partners</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+  /* ── DARK MODE ── */
+  const ROOT = document.documentElement;
+  function applyDark(dark) {
+    ROOT.classList.toggle('dark', dark);
+    document.getElementById('modeIcon').textContent  = dark ? '◐' : '◑';
+    document.getElementById('modeLabel').textContent = dark ? 'LIGHT' : 'DARK';
+  }
+  function toggleDark() {
+    const next = !ROOT.classList.contains('dark');
+    localStorage.setItem('pg-dark', next ? '1' : '0');
+    applyDark(next);
+  }
+  applyDark(ROOT.classList.contains('dark'));
+
+  /* ── YES/NO BUTTONS ── */
+  function setYN(groupId, btn, hiddenId, val) {
+    document.querySelectorAll('#' + groupId + ' .yn-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(hiddenId).value = val;
+  }
+
+  /* ── LEVEL BUTTONS ── */
+  function setLevel(groupId, btn, hiddenId, val) {
+    document.querySelectorAll('#' + groupId + ' .level-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(hiddenId).value = val;
+  }
+
+  /* ── ADVANCED TOGGLE ── */
+  function toggleAdv(btn) {
+    const panel = document.getElementById('advPanel');
+    const open  = panel.classList.toggle('open');
+    btn.textContent = (open ? '▾ ' : '▸ ') + 'Advanced path parameters';
+  }
+
+  /* ── RESET TO HA DEFAULTS ── */
+  function resetToHA() {
+    document.getElementById('owner').value = 'home-assistant';
+    document.getElementById('repo').value  = 'core';
+    document.getElementById('token').value = '';
+    document.getElementById('configPath').value     = 'homeassistant/config_entries.py';
+    document.getElementById('authPath').value       = 'homeassistant/components/auth/__init__.py';
+    document.getElementById('componentsDir').value  = 'homeassistant/components';
+    document.getElementById('ciWorkflow').value     = '.github/workflows/codeql.yml';
+    setYN('yn-acm',   document.querySelector('#yn-acm   .yn-btn:last-child'),   'op-acm',   false);
+    setYN('yn-avail', document.querySelector('#yn-avail .yn-btn:last-child'),   'op-avail', false);
+    setYN('yn-min',   document.querySelector('#yn-min   .yn-btn:first-child'),  'op-min',   true);
+    setLevel('lvl-cyber',   document.querySelector('#lvl-cyber   .level-btn:first-child'), 'op-cyber',   1);
+    setLevel('lvl-approp',  document.querySelector('#lvl-approp  .level-btn:nth-child(2)'),'op-approp',  3);
+  }
+
+  /* ── COLLAPSIBLE SECTIONS ── */
+  function toggleSection(header) {
+    const panel   = header.nextElementSibling;
+    const expanded = header.getAttribute('aria-expanded') === 'true';
+    header.setAttribute('aria-expanded', String(!expanded));
+    panel.style.display = expanded ? 'none' : 'block';
+  }
+  document.querySelectorAll('.section-toggle[aria-expanded="false"]').forEach(h => {
+    const p = h.nextElementSibling;
+    if (p) p.style.display = 'none';
+  });
+</script>
+</body>
+</html>

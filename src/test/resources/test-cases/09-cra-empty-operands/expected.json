@@ -1,0 +1,26 @@
+{
+  "allow": true,
+  "obligations": {
+    "cra:annex:i:p1:1:rule":   "inactive",
+    "cra:annex:i:p1:2:rule":   "inactive",
+    "cra:annex:i:p1:3:a:rule": "inactive",
+    "cra:annex:i:p1:3:b:rule": "inactive",
+    "cra:annex:i:p1:3:c:rule": "inactive",
+    "cra:annex:i:p1:3:d:rule": "inactive",
+    "cra:annex:i:p1:3:e:rule": "inactive",
+    "cra:annex:i:p1:3:f:rule": "inactive",
+    "cra:annex:i:p1:3:g:rule": "inactive",
+    "cra:annex:i:p1:3:h:rule": "inactive",
+    "cra:annex:i:p1:3:i:rule": "inactive",
+    "cra:annex:i:p1:3:j:rule": "inactive",
+    "cra:annex:i:p1:3:k:rule": "inactive",
+    "cra:annex:i:p2:1:rule":   "inactive",
+    "cra:annex:i:p2:2:rule":   "inactive",
+    "cra:annex:i:p2:3:rule":   "inactive",
+    "cra:annex:i:p2:4:rule":   "inactive",
+    "cra:annex:i:p2:5:rule":   "inactive",
+    "cra:annex:i:p2:6:rule":   "inactive",
+    "cra:annex:i:p2:7:rule":   "inactive",
+    "cra:annex:i:p2:8:rule":   "inactive"
+  }
+}

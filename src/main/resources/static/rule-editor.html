@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RuleScan — Rule Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <script>
+    (function(){
+      var s = localStorage.getItem('pg-dark');
+      var sys = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (s === '1' || (s === null && sys)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper:   #f4f1ea; --paper2:  #eae6db; --panel:   #faf7f2; --panel-border: var(--ink);
+      --ink:     #1a1714; --ink2:    #3d3830;
+      --ink3:    #5c5750; --grid:    rgba(0,0,0,.07); --accent:  #b03228;
+      --blue-ui: #1c6ea4; --blue:    #1a5c8a; --green:   #1a5e36; --amber:   #7a5200;
+      --line:    rgba(0,0,0,.14); --shadow:  rgba(26,23,20,.18);
+    }
+    html.dark {
+      --paper:   #0f1117; --paper2:  #1a1d27; --panel:   #1e2235; --panel-border: transparent;
+      --ink:     #e2e8f0; --ink2:    #94a3b8;
+      --ink3:    #64748b; --grid:    rgba(46,51,82,.55); --accent:  #ef4444;
+      --blue-ui: #6366f1; --blue:    #818cf8; --green:   #22c55e; --amber:   #f59e0b;
+      --line:    #2e3352; --shadow:  rgba(0,0,0,.5);
+    }
+
+    html { scroll-behavior: smooth; font-size: 17px; }
+    body {
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      background-color: var(--paper);
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 56px 56px;
+      color: var(--ink); min-height: 100vh; transition: background-color .3s, color .3s;
+    }
+
+    /* ── CORNER MARKS ── */
+    .corner-marks { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .rcm { position: absolute; width: 14px; height: 14px; }
+    .rcm::before, .rcm::after { content: ''; position: absolute; }
+    .rcm-tl { top:20px;left:20px; } .rcm-tr { top:20px;right:20px; }
+    .rcm-bl { bottom:20px;left:20px; } .rcm-br { bottom:20px;right:20px; }
+    .rcm-tl::before,.rcm-tl::after,.rcm-tr::before,.rcm-tr::after { background: var(--blue-ui); }
+    .rcm-bl::before,.rcm-bl::after,.rcm-br::before,.rcm-br::after { background: var(--accent); }
+    .rcm::before { width:1px;height:100%;left:50%; }
+    .rcm::after  { width:100%;height:1px;top:50%; }
+    .reg-mark { display:inline-block;width:6px;height:6px;background:var(--blue-ui);flex-shrink:0; }
+
+    /* ── PAGE ── */
+    .page { max-width: 1380px; margin: 0 auto; padding: 0 28px 100px; }
+
+    /* ── NAV ── */
+    nav { display:flex;align-items:center;border-bottom:1px solid var(--ink);padding:18px 0 14px; }
+    .nav-brand { font-family:'Bebas Neue',sans-serif;font-size:1.45rem;letter-spacing:.12em;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:10px; }
+    .nav-meta { font-size:0.65rem;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-left:14px;padding-left:14px;border-left:1px solid var(--line);line-height:1.3; }
+    .nav-meta strong { color:var(--ink2);display:block; }
+    .nav-links { display:flex;margin-left:auto; }
+    .nav-links a { font-size:0.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);text-decoration:none;padding:6px 12px;border:1px solid var(--line);border-right:none;transition:background .12s,color .12s; }
+    @media (max-width:1200px) { .nav-meta { display:none; } }
+    .nav-links a:first-child { border-radius:4px 0 0 4px; }
+    .nav-links a:last-child  { border-right:1px solid var(--line);border-radius:0 4px 4px 0; }
+    .nav-links a:hover,.nav-links a.active { background:var(--blue-ui);color:var(--paper);border-color:var(--blue-ui); }
+    .mode-btn { font-family:'Courier Prime',monospace;font-size:0.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--ink2);background:transparent;color:var(--ink2);padding:6px 14px;cursor:pointer;display:flex;align-items:center;gap:6px;border-radius:4px;transition:background .12s,color .12s,border-color .12s;margin-left:12px; }
+    .mode-btn:hover { background:var(--blue-ui);color:var(--paper);border-color:var(--blue-ui); }
+
+    /* ── HERO ── */
+    .hero { padding:48px 0 32px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:1fr auto;align-items:end;gap:24px; }
+    .hero-title { font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,7vw,6rem);line-height:.92;letter-spacing:.04em;color:var(--ink); }
+    .hero-title em { color:var(--accent);font-style:normal; }
+    .hero-meta { font-size:0.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);line-height:1.8;text-align:right; }
+    .hero-meta strong { color:var(--ink2);display:block; }
+
+    /* ── RULE LINE ── */
+    .rule-line { display:flex;align-items:center;gap:8px;margin:24px 0; }
+    .rule-line hr { flex:1;border:none;border-top:1px solid var(--ink); }
+    .rule-label { font-size:0.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);white-space:nowrap; }
+
+    /* ── FORM PANEL ── */
+    .form-panel { background:var(--panel);border:1px solid var(--panel-border);border-radius:6px;box-shadow:4px 5px 0 var(--shadow);overflow:hidden; }
+    .panel-head { display:flex;align-items:center;gap:10px;padding:12px 16px 10px;border-bottom:1px solid var(--ink); }
+    .panel-step { font-size:0.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3); }
+    .panel-title { font-family:'Bebas Neue',sans-serif;font-size:1.15rem;letter-spacing:.08em;color:var(--ink); }
+    .panel-head-right { margin-left:auto;display:flex;align-items:center;gap:8px; }
+    .panel-head-count { font-size:0.68rem;color:var(--ink2);padding-left:14px;border-left:1px solid var(--line); }
+    .panel-note { padding:10px 16px;font-size:0.72rem;color:var(--ink3);line-height:1.5;border-top:1px solid var(--line);background:var(--paper2); }
+
+    /* ── BADGES ── */
+    .badge { display:inline-block;padding:2px 7px;font-size:0.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:1px solid;white-space:nowrap; }
+    .badge-green { color:var(--green); border-color:var(--green); background:rgba(26,94,54,.07); }
+    .badge-red   { color:var(--accent);border-color:var(--accent);background:rgba(176,50,40,.07); }
+    .badge-blue  { color:var(--blue);  border-color:var(--blue);  background:rgba(26,92,138,.07); }
+    .badge-gray  { color:var(--ink2);  border-color:var(--ink3);  background:transparent; }
+    html.dark .badge-green { background:rgba(34,197,94,.15); color:#4ade80;border-color:rgba(34,197,94,.3); }
+    html.dark .badge-red   { background:rgba(239,68,68,.15); color:#f87171;border-color:rgba(239,68,68,.3); }
+    html.dark .badge-blue  { background:rgba(99,102,241,.15);color:#818cf8;border-color:rgba(99,102,241,.3); }
+    html.dark .badge-gray  { background:rgba(148,163,184,.1);color:#94a3b8;border-color:#2e3352; }
+
+    /* ── META / FORM INPUTS ── */
+    .field { margin-bottom:12px; }
+    .field label { display:block;font-size:0.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin-bottom:5px; }
+    .field input[type="text"] { width:100%;font-family:'Courier Prime',monospace;font-size:0.85rem;background:var(--paper2);border:1px solid var(--ink2);color:var(--ink);padding:8px 12px;border-radius:4px;outline:none;transition:border-color .15s; }
+    .field input:focus { border-color:var(--ink); }
+    .meta-grid { display:grid;grid-template-columns:2fr 1.2fr 0.8fr 0.8fr;gap:14px;padding:14px 16px; }
+
+    /* ── THREE-PANEL GRID ── */
+    .panel-grid { display:grid;grid-template-columns:1fr 1.5fr 1.4fr;gap:20px;align-items:start; }
+    @media (max-width:1100px) { .panel-grid { grid-template-columns:1fr; } }
+
+    /* ── RULE LIST ── */
+    .rule-list-body { padding:10px;max-height:520px;overflow-y:auto; }
+    .rule-list-empty { padding:32px 16px;text-align:center;color:var(--ink3);font-size:0.78rem;line-height:1.6; }
+    .rule-item {
+      padding:10px 12px 10px 36px;background:var(--paper2);border:1px solid var(--line);
+      border-radius:4px;cursor:pointer;transition:border-color .12s,background .12s,opacity .15s;
+      position:relative;margin-bottom:6px;border-left:3px solid transparent;
+    }
+    .rule-item:last-child { margin-bottom:0; }
+    .rule-item:hover:not(.selected) { border-color:var(--ink2);background:var(--panel); }
+    .rule-item.selected { background:var(--panel);border-color:var(--blue-ui);border-left-color:var(--blue-ui); }
+    .rule-item.dragging { opacity:.35; }
+    .rule-item.drag-over { border-top:2px solid var(--blue-ui); }
+    .drag-handle { position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink3);cursor:grab;font-size:0.9rem;line-height:1;user-select:none; }
+    .drag-handle:active { cursor:grabbing; }
+    .rule-item-id   { font-family:'Courier Prime',monospace;font-size:0.72rem;color:var(--ink);margin-bottom:3px;padding-right:22px; }
+    .rule-item-desc { font-size:0.7rem;color:var(--ink3);margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:22px; }
+    .rule-item-meta { display:flex;gap:6px;align-items:center;flex-wrap:wrap; }
+    .rule-del { position:absolute;top:8px;right:8px;background:none;border:none;color:var(--ink3);cursor:pointer;font-size:0.8rem;padding:2px 6px;border-radius:3px;line-height:1;transition:background .12s,color .12s; }
+    .rule-del:hover { background:var(--accent);color:var(--paper); }
+    .add-rule-btn { width:calc(100% - 20px);margin:6px 10px 10px;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border:1px dashed var(--ink2);background:transparent;color:var(--ink2);border-radius:4px;cursor:pointer;font-family:'Courier Prime',monospace;font-size:0.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;transition:border-color .12s,color .12s,background .12s; }
+    .add-rule-btn:hover { border-color:var(--blue-ui);color:var(--blue-ui);background:rgba(28,110,164,.05); }
+
+    /* ── RULE EDITOR ── */
+    .editor-body { padding:14px 16px; }
+    .editor-empty { padding:48px 24px;text-align:center;color:var(--ink3);font-size:0.78rem;line-height:1.7; }
+
+    .type-group { display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--paper2);border:1px solid var(--ink2);border-radius:5px;padding:3px;margin-bottom:18px; }
+    .type-btn { font-family:'Courier Prime',monospace;font-size:0.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:none;background:transparent;color:var(--ink2);padding:7px 10px;cursor:pointer;border-radius:4px;transition:background .12s,color .12s; }
+    .type-btn.active { background:var(--paper);color:var(--ink);box-shadow:0 1px 3px var(--shadow); }
+
+    .editor-section { margin-bottom:16px; }
+    .editor-section-label { font-size:0.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;display:flex;align-items:center;gap:8px; }
+    .editor-section-label span { white-space:nowrap; }
+    .editor-section-label::after { content:'';flex:1;border-top:1px solid var(--line); }
+    .editor-section-sublabel { font-size:0.65rem;color:var(--ink3);margin-bottom:8px;font-style:italic; }
+
+    .cond-row { display:grid;grid-template-columns:1fr 72px 72px 26px;gap:5px;align-items:center;margin-bottom:6px; }
+    .cond-input { font-family:'Courier Prime',monospace;font-size:0.78rem;background:var(--paper2);border:1px solid var(--ink2);color:var(--ink);padding:6px 7px;border-radius:3px;outline:none;width:100%;transition:border-color .15s; }
+    .cond-input:focus { border-color:var(--ink); }
+    .cond-input.error { border-color:var(--accent); }
+    select.cond-input { cursor:pointer; }
+    .cond-remove { background:none;border:1px solid var(--line);color:var(--ink3);cursor:pointer;padding:4px;border-radius:3px;font-size:0.75rem;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .12s; }
+    .cond-remove:hover { background:var(--accent);border-color:var(--accent);color:var(--paper); }
+    .cond-row-header { display:grid;grid-template-columns:1fr 72px 72px 26px;gap:5px;margin-bottom:4px; }
+    .cond-col-label { font-size:0.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);padding:0 7px; }
+    .add-cond-btn { display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px dashed var(--ink3);background:transparent;color:var(--ink3);border-radius:3px;cursor:pointer;font-family:'Courier Prime',monospace;font-size:0.68rem;letter-spacing:.08em;text-transform:uppercase;transition:all .12s;margin-top:2px; }
+    .add-cond-btn:hover { border-color:var(--blue-ui);color:var(--blue-ui); }
+
+    /* ── PRE-CONDITION EXPRESSION ── */
+    .pre-expr { min-height:38px;display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:8px 0 10px; }
+    .pre-empty { font-size:0.72rem;color:var(--ink3);font-style:italic; }
+    .pre-token { display:inline-flex;align-items:center;gap:4px;font-family:'Courier Prime',monospace;font-size:0.72rem;border-radius:3px;padding:3px 8px; }
+    .pre-ref  { background:rgba(28,110,164,.1);border:1px solid var(--blue);color:var(--blue); }
+    html.dark .pre-ref { background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.4);color:#818cf8; }
+    .pre-op   { background:rgba(122,82,0,.08);border:1px solid var(--amber);color:var(--amber);font-weight:700;letter-spacing:.06em; }
+    html.dark .pre-op { background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.35);color:#f59e0b; }
+    .pre-paren { background:transparent;border:1px solid var(--ink3);color:var(--ink2);font-weight:700;font-size:1rem;padding:2px 6px; }
+    .pre-tok-del { background:none;border:none;cursor:pointer;color:inherit;opacity:.55;padding:0 0 0 3px;line-height:1;font-size:0.8rem; }
+    .pre-tok-del:hover { opacity:1; }
+    .pre-actions { display:flex;flex-wrap:wrap;gap:5px;margin-top:2px; }
+    .pre-add-select { font-family:'Courier Prime',monospace;font-size:0.72rem;background:var(--paper2);border:1px solid var(--ink2);color:var(--ink);padding:5px 8px;border-radius:3px;cursor:pointer;max-width:190px; }
+    .pre-op-btn { font-family:'Courier Prime',monospace;font-size:0.72rem;font-weight:700;letter-spacing:.06em;background:transparent;border:1px solid var(--ink2);color:var(--ink2);padding:5px 10px;border-radius:3px;cursor:pointer;transition:all .12s; }
+    .pre-op-btn:hover { border-color:var(--ink);color:var(--ink);background:var(--paper2); }
+    .pre-new-form { margin-top:10px;padding:10px 12px;background:var(--paper2);border-radius:4px;border:1px dashed var(--ink2);display:none; }
+    .pre-new-form.visible { display:block; }
+    .pre-new-grid { display:grid;grid-template-columns:1fr 72px 72px auto;gap:6px;align-items:end; }
+    .pre-new-col-label { font-size:0.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:3px; }
+    .pre-new-btn { font-family:'Courier Prime',monospace;font-size:0.72rem;font-weight:700;background:var(--blue-ui);border:none;color:var(--paper);padding:7px 12px;border-radius:3px;cursor:pointer;align-self:end; }
+
+    /* ── JSON PREVIEW ── */
+    .json-toolbar { display:flex;border-bottom:1px solid var(--ink); }
+    .json-tool-btn { font-family:'Courier Prime',monospace;font-size:0.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--ink2);border:none;border-right:1px solid var(--line);padding:9px 14px;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap; }
+    .json-tool-btn:hover { background:var(--blue-ui);color:var(--paper); }
+    .json-tool-btn:last-child { border-right:none; }
+    .json-tool-btn.flash { background:var(--green);color:var(--paper); }
+    html.dark .json-tool-btn.flash { background:var(--green);color:var(--paper); }
+    .json-body { background:var(--paper2);font-family:'Courier Prime',monospace;font-size:0.75rem;line-height:1.7;padding:14px 16px;overflow:auto;max-height:540px; }
+    .json-body pre { white-space:pre-wrap;word-break:break-all; }
+    .jk { color:var(--blue); }
+    .js { color:var(--green); }
+    .jb { color:var(--amber); }
+    .jn { color:var(--accent); }
+
+    /* ── IMPORT BUTTON ── */
+    .icon-btn { font-family:'Courier Prime',monospace;font-size:0.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:transparent;border:1px solid var(--line);color:var(--ink3);padding:4px 10px;border-radius:3px;cursor:pointer;transition:all .12s;white-space:nowrap; }
+    .icon-btn:hover { border-color:var(--blue-ui);color:var(--blue-ui); }
+
+    /* ── VALIDATION ── */
+    .validation-flash { margin-top:16px;padding:12px 16px;border:1px solid var(--accent);background:rgba(176,50,40,.06);display:none; }
+    .validation-flash ul { padding-left:18px;font-size:0.78rem;color:var(--accent);line-height:1.8; }
+
+    /* ── EXPORT BAR ── */
+
+
+    /* ── FOOTER ── */
+    .footer-line { display:flex;align-items:center;gap:8px;margin-top:60px; }
+    .footer-line hr { flex:1;border:none;border-top:1px solid var(--line); }
+  </style>
+</head>
+<body>
+
+<datalist id="operandList">
+  <option value="product/has-digital-element">
+  <option value="product/allow-configuration">
+  <option value="product/has-restricted-access">
+  <option value="product/process-data">
+  <option value="product/use-external-services">
+  <option value="product/has-digital-interface">
+  <option value="product/has-available-security-updates">
+  <option value="product/cybersecurity-level">
+  <option value="product/has-known-exploitable-vulns">
+  <option value="product/has-secure-by-default-config">
+  <option value="product/has-control-access-mecanism">
+  <option value="product/use-encrypted-data">
+  <option value="product/ensure-integrity">
+  <option value="product/respect-minimisation-of-data">
+  <option value="product/availability-of-essential-func">
+  <option value="product/minimise-availability-issue">
+  <option value="product/has-limited-attack-surfaces">
+  <option value="product/is-using-exploitation-mitigation">
+  <option value="product/is-recording-security-info">
+  <option value="product/is-updatable">
+  <option value="product/document-vulns-and-components">
+  <option value="product/product-vulns-are-remediated">
+  <option value="product/is-security-tested">
+  <option value="product/publically-disclose-sec-updates">
+  <option value="product/has-enforced-vuln-disclosure">
+  <option value="product/has-shared-product-vulns">
+  <option value="product/has-sec-updates-securely-dist">
+  <option value="product/security-updates-free-and-timely">
+  <option value="values/appropriate-level">
+</datalist>
+
+
+
+<div class="corner-marks" aria-hidden="true">
+  <div class="rcm rcm-tl"></div><div class="rcm rcm-tr"></div>
+  <div class="rcm rcm-bl"></div><div class="rcm rcm-br"></div>
+</div>
+
+<div class="page">
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-brand" href="#">
+      <span class="reg-mark"></span>
+      RULESCAN
+    </a>
+    <div class="nav-meta">
+      Automated Compliance Evaluation<br>
+      <strong>ENGINE v2.0</strong>
+    </div>
+    <div class="nav-links">
+      <a href="/">ENGINE</a>
+      <a href="/cra">CRA ASSESSMENT</a>
+      <a href="/rule-editor.html" class="active">RULE EDITOR</a>
+      <a href="/home-assistant.html">HOME ASSISTANT</a>
+    </div>
+    <button class="mode-btn" onclick="toggleDark()">
+      <span id="modeIcon">◑</span>
+      <span id="modeLabel">DARK</span>
+    </button>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-title">
+        RULE<br>
+        <em>EDITOR</em>
+      </div>
+    </div>
+    <div class="hero-meta">
+      Define rules, pre-conditions and constraints.<br>
+      Build your rule set — export the JSON, drop it into the engine.<br>
+      <strong>No technical knowledge required.</strong>
+    </div>
+  </div>
+
+  <!-- POLICY METADATA -->
+  <div class="rule-line">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Rule Set Metadata</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+  <div class="form-panel" style="margin-bottom:20px;">
+    <div class="panel-head">
+      <span class="reg-mark"></span>
+      <span class="panel-title">General Information</span>
+    </div>
+    <div class="meta-grid">
+      <div class="field" style="margin-bottom:0;">
+        <label>Source Document (Law, Standard, or Policy)</label>
+        <input type="text" id="metaName" placeholder="e.g. My CRA Annex I Policy">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Document identifier</label>
+        <input type="text" id="metaUuid" placeholder="e.g. my-policy:v1">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Version</label>
+        <input type="text" id="metaVersion" placeholder="e.g. 1.0">
+      </div>
+      <div class="field" style="margin-bottom:0;">
+        <label>Date</label>
+        <input type="text" id="metaDate" placeholder="2026-01-01">
+      </div>
+    </div>
+  </div>
+
+  <!-- RULE EDITOR -->
+  <div class="rule-line" style="margin-top:0;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Rule Editor</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+  <div class="panel-grid">
+
+    <!-- PANEL 1: Rule list -->
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importPolicy(this)">
+    <div class="form-panel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-title">Rule List</span>
+        <div class="panel-head-right">
+          <button class="icon-btn" onclick="document.getElementById('importFile').click()">↑ IMPORT</button>
+          <span class="panel-head-count" id="ruleCount">0 rules</span>
+        </div>
+      </div>
+      <div class="rule-list-body" id="ruleListBody"></div>
+      <button class="add-rule-btn" onclick="addRule()">+ ADD RULE</button>
+    </div>
+
+    <!-- PANEL 2: Rule editor -->
+    <div class="form-panel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-title">Edit Rule</span>
+        <div class="panel-head-right">
+          <span class="panel-head-count" id="editorRuleId" style="font-family:'Courier Prime',monospace;font-size:0.7rem;"></span>
+        </div>
+      </div>
+      <div id="editorBody"></div>
+      <div class="panel-note">Select a rule in the list to edit it. Drag <strong>⠿</strong> to reorder.</div>
+    </div>
+
+    <!-- PANEL 3: JSON preview -->
+    <div class="form-panel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-title">JSON Preview</span>
+        <div class="panel-head-right">
+          <button class="json-tool-btn" id="copyBtn" onclick="copyJSON()">[ COPY ]</button>
+          <button class="json-tool-btn" onclick="exportPolicy()">[ EXPORT ]</button>
+        </div>
+      </div>
+      <div class="json-body"><pre id="jsonPreview"></pre></div>
+    </div>
+
+  </div><!-- /panel-grid -->
+
+  <!-- VALIDATION -->
+  <div class="validation-flash" id="validationFlash">
+    <ul id="validationList"></ul>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-line">
+    <span class="reg-mark"></span>
+    <span class="rule-label">RuleScan — Rule Editor · University of Namur / Comexis Partners</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+/* ══════════════════════════════════════════════
+   STATE
+══════════════════════════════════════════════ */
+const EXAMPLE_STATE = {
+  meta: { uuid: 'cra:document', name: 'EU Cyber Resilience Act — Annex I', version: '1.0', date: '2026-06-11' },
+  setUuid: '',
+  preDefs: [
+    { id: 'pre:digital',   label: 'Is a digital element',   description: '', l: 'product/has-digital-element',   op: 'eq', r: 'true' },
+    { id: 'pre:restricted',label: 'Has restricted access',  description: '', l: 'product/has-restricted-access', op: 'eq', r: 'true' },
+    { id: 'pre:config',    label: 'Allows configuration',   description: '', l: 'product/allow-configuration',   op: 'eq', r: 'true' },
+    { id: 'pre:data',      label: 'Processes data',         description: '', l: 'product/process-data',          op: 'eq', r: 'true' },
+    { id: 'pre:interface', label: 'Has digital interface',  description: '', l: 'product/has-digital-interface', op: 'eq', r: 'true' },
+    { id: 'pre:external',  label: 'Uses external services', description: '', l: 'product/use-external-services', op: 'eq', r: 'true' },
+    { id: 'pre:updatable', label: 'Is updatable',           description: '', l: 'product/is-updatable',          op: 'eq', r: 'true' },
+  ],
+  rules: [
+    { uid: 'cra:annex:i:p1:1', label: 'No known exploitable vulnerabilities', description: '', type: 'obligation',
+      pre: [{ t: 'ref', id: 'pre:digital' }],
+      con: { l: 'product/has-known-exploitable-vulns', op: 'eq', r: 'false' } },
+    { uid: 'cra:annex:i:p1:2:a', label: 'Secure by default configuration', description: '', type: 'obligation',
+      pre: [{ t: 'ref', id: 'pre:digital' }],
+      con: { l: 'product/has-secure-by-default-config', op: 'eq', r: 'true' } },
+    { uid: 'cra:annex:i:p1:3:b', label: 'Access control mechanism', description: '', type: 'obligation',
+      pre: [{ t: 'ref', id: 'pre:digital' }, { t: 'and' }, { t: 'ref', id: 'pre:restricted' }],
+      con: { l: 'product/has-control-access-mecanism', op: 'eq', r: 'true' } },
+    { uid: 'cra:annex:i:p1:3:f', label: 'Limited attack surfaces', description: '', type: 'obligation',
+      pre: [{ t: 'ref', id: 'pre:digital' }],
+      con: { l: 'product/has-limited-attack-surfaces', op: 'eq', r: 'true' } },
+    { uid: 'cra:annex:i:p2:4', label: 'Security updates — free and timely', description: '', type: 'permission',
+      pre: [{ t: 'ref', id: 'pre:updatable' }],
+      con: { l: 'product/security-updates-free-and-timely', op: 'eq', r: 'true' } }
+  ],
+  sel: 2
+};
+
+let S = deepClone(EXAMPLE_STATE);
+let dragSrc = null;
+
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+
+/* ══════════════════════════════════════════════
+   INIT
+══════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('metaName').value    = S.meta.name;
+  document.getElementById('metaUuid').value    = S.meta.uuid;
+  document.getElementById('metaVersion').value = S.meta.version;
+  document.getElementById('metaDate').value    = S.meta.date;
+  ['metaName','metaUuid','metaVersion','metaDate'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      S.meta.name    = document.getElementById('metaName').value;
+      S.meta.uuid    = document.getElementById('metaUuid').value;
+      S.meta.version = document.getElementById('metaVersion').value;
+      S.meta.date    = document.getElementById('metaDate').value;
+      renderJSON();
+    });
+  });
+  renderAll();
+});
+
+/* ══════════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════════ */
+function renderAll() { renderList(); renderEditor(); renderJSON(); }
+
+function renderList() {
+  const el = document.getElementById('ruleListBody');
+  document.getElementById('ruleCount').textContent =
+    S.rules.length + (S.rules.length === 1 ? ' rule' : ' rules');
+
+  if (S.rules.length === 0) {
+    el.innerHTML = '<div class="rule-list-empty">No rules yet.<br>Click <strong>+ ADD RULE</strong> to start.</div>';
+    return;
+  }
+  el.innerHTML = S.rules.map((r, i) => `
+    <div class="rule-item${i === S.sel ? ' selected' : ''}"
+         onclick="selectRule(${i})"
+         draggable="true"
+         ondragstart="onDragStart(event,${i})"
+         ondragover="onDragOver(event,${i})"
+         ondragleave="onDragLeave(event,${i})"
+         ondrop="onDrop(event,${i})">
+      <span class="drag-handle" title="Drag to reorder">⠿</span>
+      <div class="rule-item-id">${escHtml(r.uid) || '<em style="color:var(--ink3)">untitled</em>'}</div>
+      <div class="rule-item-desc">${escHtml(r.label) || '—'}</div>
+      <div class="rule-item-meta">
+        <span class="badge ${r.type === 'permission' ? 'badge-green' : 'badge-blue'}">${r.type === 'permission' ? 'PRM' : 'OBL'}</span>
+        <span class="badge badge-gray">${r.pre.filter(t=>t.t==='ref').length} pre</span>
+        <span class="badge badge-gray">1 con</span>
+      </div>
+      <button class="rule-del" onclick="deleteRule(event,${i})" title="Delete">×</button>
+    </div>`).join('');
+}
+
+function renderEditor() {
+  const body = document.getElementById('editorBody');
+  const idEl = document.getElementById('editorRuleId');
+
+  if (S.sel < 0 || S.sel >= S.rules.length) {
+    idEl.textContent = '';
+    body.innerHTML = '<div class="editor-empty">Select a rule in the list to edit it,<br>or click <strong>+ ADD RULE</strong> to create one.</div>';
+    return;
+  }
+  const r = S.rules[S.sel];
+  idEl.textContent = r.uid || 'untitled';
+
+  body.innerHTML = `
+    <div class="editor-body">
+      <div class="field">
+        <label>Rule identifier</label>
+        <input type="text" value="${escAttr(r.uid)}" placeholder="e.g. my:rule:1"
+               oninput="updateRule('uid',this.value)">
+      </div>
+      <div class="field">
+        <label>Label <span style="color:var(--ink3);font-size:0.58rem;">(short display name)</span></label>
+        <input type="text" value="${escAttr(r.label)}" placeholder="e.g. No known exploitable vulnerabilities"
+               oninput="updateRule('label',this.value)">
+      </div>
+      <div class="field" style="margin-bottom:16px;">
+        <label>Description <span style="color:var(--ink3);font-size:0.58rem;">(optional comment)</span></label>
+        <input type="text" value="${escAttr(r.description)}" placeholder="Longer explanation or reference"
+               oninput="updateRule('description',this.value)">
+      </div>
+      <div class="field" style="margin-bottom:6px;"><label>Type</label></div>
+      <div class="type-group" style="margin-bottom:18px;">
+        <button class="type-btn${r.type === 'obligation'  ? ' active' : ''}" onclick="setType('obligation')">Obligation</button>
+        <button class="type-btn${r.type === 'permission' ? ' active' : ''}" onclick="setType('permission')">Permission</button>
+      </div>
+      ${renderPreSection(r.pre)}
+      ${renderConstraintSection(r.con)}
+    </div>`;
+}
+
+function renderCondSection(kind, conds, title, sub) {
+  const header = conds.length > 0 ? `
+    <div class="cond-row-header">
+      <div class="cond-col-label">Evidence Point</div>
+      <div class="cond-col-label">Operator</div>
+      <div class="cond-col-label">Value</div>
+      <div></div>
+    </div>` : '';
+  const rows = conds.map((c, i) => condRow(kind, i, c)).join('');
+  return `
+    <div class="editor-section">
+      <div class="editor-section-label"><span>${escHtml(title)}</span></div>
+      <div class="editor-section-sublabel">${escHtml(sub)}</div>
+      ${header}${rows}
+      <button class="add-cond-btn" onclick="addCond('${kind}')">+ add ${kind === 'pre' ? 'pre-condition' : 'constraint'}</button>
+    </div>`;
+}
+
+function condRow(kind, i, c) {
+  const ops = ['eq','neq','gt','gte','lt','lte'];
+  const opOpts = ops.map(o => `<option${c.op === o ? ' selected' : ''}>${o}</option>`).join('');
+  return `<div class="cond-row">
+    <input class="cond-input" type="text" list="operandList"
+           value="${escAttr(c.l)}" placeholder="evidence-point/name"
+           oninput="updateCond('${kind}',${i},'l',this.value)">
+    <select class="cond-input" onchange="updateCond('${kind}',${i},'op',this.value)">${opOpts}</select>
+    <input class="cond-input" type="text"
+           value="${escAttr(c.r)}" placeholder="value"
+           oninput="updateCond('${kind}',${i},'r',this.value)">
+    <button class="cond-remove" onclick="removeCond('${kind}',${i})">×</button>
+  </div>`;
+}
+
+function renderJSON() {
+  document.getElementById('jsonPreview').innerHTML = syntaxHighlight(
+    JSON.stringify(buildPolicy(), null, 2)
+  );
+}
+
+/* ══════════════════════════════════════════════
+   RULE ACTIONS
+══════════════════════════════════════════════ */
+function selectRule(i) {
+  S.sel = i;
+  renderList();
+  renderEditor();
+}
+
+function addRule() {
+  S.rules.push({ uid: '', label: '', description: '', type: 'obligation', pre: [], con: { l: '', op: 'eq', r: '' } });
+  S.sel = S.rules.length - 1;
+  renderAll();
+  // focus uid input after render
+  setTimeout(() => {
+    const inp = document.querySelector('#editorBody input[type="text"]');
+    if (inp) inp.focus();
+  }, 30);
+}
+
+function deleteRule(e, i) {
+  e.stopPropagation();
+  S.rules.splice(i, 1);
+  if (S.sel >= S.rules.length) S.sel = S.rules.length - 1;
+  renderAll();
+}
+
+function updateRule(field, val) {
+  if (S.sel < 0) return;
+  S.rules[S.sel][field] = val;
+  document.getElementById('editorRuleId').textContent = S.rules[S.sel].uid || 'untitled';
+  // re-render only the list card + JSON (not full editor to preserve focus)
+  renderList();
+  renderJSON();
+}
+
+function setType(type) {
+  if (S.sel < 0) return;
+  S.rules[S.sel].type = type;
+  renderList();
+  renderEditor();
+  renderJSON();
+}
+
+/* ══════════════════════════════════════════════
+   PRE-CONDITION EXPRESSION
+══════════════════════════════════════════════ */
+function renderPreSection(pre) {
+  const defs = S.preDefs || [];
+  let exprHTML = pre.length === 0
+    ? '<span class="pre-empty">Always active — add a pre-condition to restrict activation.</span>'
+    : pre.map((tok, i) => {
+        const del = `<button class="pre-tok-del" onclick="removePreToken(${i})" title="Remove">×</button>`;
+        if (tok.t === 'ref') {
+          const def = defs.find(d => d.id === tok.id);
+          const lbl = def ? escHtml(def.label) : `<em>${escHtml(tok.id)}</em>`;
+          return `<span class="pre-token pre-ref">${lbl}${del}</span>`;
+        }
+        if (tok.t === 'and') return `<span class="pre-token pre-op">AND${del}</span>`;
+        if (tok.t === 'or')  return `<span class="pre-token pre-op">OR${del}</span>`;
+        if (tok.t === 'lp')  return `<span class="pre-token pre-paren">(${del}</span>`;
+        if (tok.t === 'rp')  return `<span class="pre-token pre-paren">)${del}</span>`;
+        return '';
+      }).join('');
+
+  const opts = defs.map(d =>
+    `<option value="${escAttr(d.id)}">${escHtml(d.label)}</option>`
+  ).join('');
+
+  return `
+    <div class="editor-section">
+      <div class="editor-section-label"><span>Pre-conditions</span></div>
+      <div class="editor-section-sublabel">Rule is active only when this expression holds. Empty = always active.</div>
+      <div class="pre-expr">${exprHTML}</div>
+      <div class="pre-actions">
+        <select class="pre-add-select" onchange="onPreSelect(this)">
+          <option value="">+ Add condition…</option>
+          ${opts}
+          <option value="__new__">— Define new —</option>
+        </select>
+        <button class="pre-op-btn" onclick="addPreToken('and')">AND</button>
+        <button class="pre-op-btn" onclick="addPreToken('or')">OR</button>
+        <button class="pre-op-btn" onclick="addPreToken('lp')">(</button>
+        <button class="pre-op-btn" onclick="addPreToken('rp')">)</button>
+      </div>
+      <div class="pre-new-form" id="preNewForm">
+        <div style="display:grid;grid-template-columns:1fr 1.5fr;gap:6px;margin-bottom:8px;">
+          <div>
+            <label class="pre-new-col-label">Label</label>
+            <input class="cond-input" type="text" id="preNewLabel" placeholder="e.g. Is a digital element">
+          </div>
+          <div>
+            <label class="pre-new-col-label">Description <span style="font-size:0.55rem;">(optional)</span></label>
+            <input class="cond-input" type="text" id="preNewDesc" placeholder="Optional comment">
+          </div>
+        </div>
+        <div class="pre-new-grid">
+          <div>
+            <label class="pre-new-col-label">Evidence Point</label>
+            <input class="cond-input" type="text" id="preNewOperand" list="operandList" placeholder="evidence-point/name">
+          </div>
+          <div>
+            <label class="pre-new-col-label">Op</label>
+            <select class="cond-input" id="preNewOp">
+              <option>eq</option><option>neq</option><option>gt</option><option>gte</option><option>lt</option><option>lte</option>
+            </select>
+          </div>
+          <div>
+            <label class="pre-new-col-label">Value</label>
+            <input class="cond-input" type="text" id="preNewVal" placeholder="true">
+          </div>
+          <button class="pre-new-btn" onclick="commitNewPreDef()">Add</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function onPreSelect(sel) {
+  const val = sel.value;
+  sel.value = '';
+  if (!val) return;
+  if (val === '__new__') {
+    const form = document.getElementById('preNewForm');
+    if (form) form.classList.toggle('visible');
+    return;
+  }
+  addPreRef(val);
+}
+
+function addPreRef(id) {
+  if (S.sel < 0) return;
+  S.rules[S.sel].pre.push({ t: 'ref', id });
+  renderEditor(); renderJSON();
+}
+
+function addPreToken(t) {
+  if (S.sel < 0) return;
+  S.rules[S.sel].pre.push({ t });
+  renderEditor(); renderJSON();
+}
+
+function removePreToken(i) {
+  if (S.sel < 0) return;
+  S.rules[S.sel].pre.splice(i, 1);
+  renderEditor(); renderJSON();
+}
+
+function commitNewPreDef() {
+  const label       = document.getElementById('preNewLabel').value.trim();
+  const description = document.getElementById('preNewDesc').value.trim();
+  const l           = document.getElementById('preNewOperand').value.trim();
+  const op          = document.getElementById('preNewOp').value;
+  const r           = document.getElementById('preNewVal').value.trim();
+  if (!label || !l || !r) return;
+  const id = 'pre:' + l.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '-' + Date.now();
+  S.preDefs = S.preDefs || [];
+  S.preDefs.push({ id, label, description, l, op, r });
+  addPreRef(id);
+}
+
+/* ══════════════════════════════════════════════
+   CONSTRAINT (single per rule)
+══════════════════════════════════════════════ */
+function renderConstraintSection(con) {
+  const ops = ['eq','neq','gt','gte','lt','lte'];
+  const opOpts = ops.map(o => `<option${con.op === o ? ' selected' : ''}>${o}</option>`).join('');
+  return `
+    <div class="editor-section">
+      <div class="editor-section-label"><span>Constraint</span></div>
+      <div class="editor-section-sublabel">Rule is satisfied only when this constraint holds.</div>
+      <div class="cond-row-header">
+        <div class="cond-col-label">Evidence Point</div>
+        <div class="cond-col-label">Operator</div>
+        <div class="cond-col-label">Value</div>
+        <div></div>
+      </div>
+      <div class="cond-row">
+        <input class="cond-input" type="text" list="operandList"
+               value="${escAttr(con.l)}" placeholder="evidence-point/name"
+               oninput="updateConstraint('l',this.value)">
+        <select class="cond-input" onchange="updateConstraint('op',this.value)">${opOpts}</select>
+        <input class="cond-input" type="text"
+               value="${escAttr(con.r)}" placeholder="value"
+               oninput="updateConstraint('r',this.value)">
+        <div></div>
+      </div>
+    </div>`;
+}
+
+function updateConstraint(field, val) {
+  if (S.sel < 0) return;
+  S.rules[S.sel].con[field] = val;
+  renderJSON();
+}
+
+/* ══════════════════════════════════════════════
+   DRAG & DROP
+══════════════════════════════════════════════ */
+function onDragStart(e, i) {
+  dragSrc = i;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const items = document.querySelectorAll('.rule-item');
+    if (items[i]) items[i].classList.add('dragging');
+  }, 0);
+}
+
+function onDragOver(e, i) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.rule-item').forEach((el, idx) =>
+    el.classList.toggle('drag-over', idx === i && dragSrc !== i));
+}
+
+function onDragLeave(e, i) {
+  const items = document.querySelectorAll('.rule-item');
+  if (items[i]) items[i].classList.remove('drag-over');
+}
+
+function onDrop(e, i) {
+  e.preventDefault();
+  document.querySelectorAll('.rule-item').forEach(el => {
+    el.classList.remove('drag-over');
+    el.classList.remove('dragging');
+  });
+  if (dragSrc === null || dragSrc === i) { dragSrc = null; return; }
+  const moved = S.rules.splice(dragSrc, 1)[0];
+  S.rules.splice(i, 0, moved);
+  // adjust selected index
+  if      (S.sel === dragSrc)                     S.sel = i;
+  else if (S.sel > dragSrc && S.sel <= i)         S.sel--;
+  else if (S.sel < dragSrc && S.sel >= i)         S.sel++;
+  dragSrc = null;
+  renderList();
+  renderJSON();
+}
+
+/* ══════════════════════════════════════════════
+   IMPORT
+══════════════════════════════════════════════ */
+function syncMetaInputs() {
+  document.getElementById('metaName').value    = S.meta.name;
+  document.getElementById('metaUuid').value    = S.meta.uuid;
+  document.getElementById('metaVersion').value = S.meta.version;
+  document.getElementById('metaDate').value    = S.meta.date;
+}
+
+function importPolicy(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const text = typeof e.target.result === 'string' ? e.target.result : new TextDecoder().decode(e.target.result);
+      const json = JSON.parse(text);
+      if (Array.isArray(json.rules)) {
+        loadEditorFormat(json);
+      } else if (Array.isArray(json.set)) {
+        loadEngineFormat(json);
+      } else {
+        showValidation(['Unrecognised format — expected a "rules" or "set" array.']);
+        return;
+      }
+      hideValidation();
+      renderAll();
+      syncMetaInputs();
+    } catch(err) {
+      showValidation(['Could not parse JSON: ' + err.message]);
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+/* Editor export format (has top-level "rules" array) */
+function loadEditorFormat(json) {
+  S.meta.name    = json.name    || '';
+  S.meta.uuid    = json.uuid    || '';
+  S.meta.version = json.version || '';
+  S.meta.date    = json.date    || '';
+  S.preDefs = (json.preConditionDefinitions || []).map(d => ({
+    id: d.id || '', label: d.label || d.id || '', description: d.description || '',
+    l: d.leftOperand || '', op: d.operator || 'eq', r: String(d.rightOperand ?? '')
+  }));
+  S.rules = (json.rules || []).map(r => {
+    const expr = r.preConditionExpression || [];
+    const pre = expr.map(tok => {
+      if (tok.operator === 'AND') return { t: 'and' };
+      if (tok.operator === 'OR')  return { t: 'or'  };
+      if (tok.operator === '(')   return { t: 'lp'  };
+      if (tok.operator === ')')   return { t: 'rp'  };
+      const def = S.preDefs.find(d =>
+        d.l === tok.leftOperand && d.op === tok.operator &&
+        String(d.r) === String(tok.rightOperand));
+      return { t: 'ref', id: def ? def.id : '' };
+    }).filter(t => t.t);
+    const c = r.constraint || {};
+    return {
+      uid: r.uid || '', label: r.label || '', description: r.description || '',
+      type: (r['@type'] || '').toLowerCase().includes('permission') ? 'permission' : 'obligation',
+      pre,
+      con: { l: c.leftOperand || '', op: c.operator || 'eq', r: String(c.rightOperand ?? '') }
+    };
+  });
+  S.sel = S.rules.length > 0 ? 0 : -1;
+}
+
+/* Engine format (has top-level "set" array + "preConditions") */
+function loadEngineFormat(json) {
+  S.meta.name    = json.name    || '';
+  S.meta.uuid    = json.uuid    || '';
+  S.meta.version = json.version || '';
+  S.meta.date    = json.date    || '';
+
+  S.preDefs = (json.preConditions || []).map(pc => {
+    const c = (pc.predicateConstraints || [])[0] || {};
+    return {
+      id: pc.uuid,
+      label: pc.label || deriveLabel(c.leftOperand || pc.uuid),
+      description: pc.description || '',
+      l: c.leftOperand || '', op: c.operator || 'eq',
+      r: String(c.rightOperand ?? '')
+    };
+  });
+
+  S.setUuid = (json.set && json.set[0] && json.set[0].uuid) ? json.set[0].uuid : '';
+  S.rules = [];
+  (json.set || []).forEach(group => {
+    (group.obligations  || []).forEach(ob => S.rules.push(parseEngineRule(ob, 'obligation')));
+    (group.permissions  || []).forEach(ob => S.rules.push(parseEngineRule(ob, 'permission')));
+  });
+  S.sel = S.rules.length > 0 ? 0 : -1;
+}
+
+function parseEngineRule(ob, type) {
+  const pre = [];
+  (ob.preConditionConstraints || []).forEach((item, topIdx) => {
+    if (topIdx > 0) pre.push({ t: 'and' });
+    if (item.uuid) {
+      pre.push({ t: 'ref', id: item.uuid });
+    } else if (Array.isArray(item.list)) {
+      const op = (item.operator || 'and').toLowerCase() === 'or' ? 'or' : 'and';
+      item.list.forEach((ref, i) => {
+        if (i > 0) pre.push({ t: op });
+        if (ref.uuid) pre.push({ t: 'ref', id: ref.uuid });
+      });
+    }
+  });
+  const c = (ob.predicateConstraints || [])[0] || {};
+  return {
+    uid: ob.uuid || '', label: ob.label || '', description: ob.description || '', type, pre,
+    con: { l: c.leftOperand || '', op: c.operator || 'eq', r: String(c.rightOperand ?? '') }
+  };
+}
+
+function deriveLabel(operand) {
+  const part = String(operand || '').split('/').pop();
+  return part.replace(/-/g, ' ').replace(/^\w/, c => c.toUpperCase());
+}
+
+/* ══════════════════════════════════════════════
+   VALIDATION
+══════════════════════════════════════════════ */
+function validate() {
+  const errors = [];
+  const seen = new Set();
+  const knownPre = new Set((S.preDefs || []).map(d => d.id));
+  S.rules.forEach((r, ri) => {
+    const label = `Rule ${ri + 1}${r.uid ? ' (' + r.uid + ')' : ''}`;
+    if (!r.uid.trim()) errors.push(`${label}: identifier is required`);
+    else if (seen.has(r.uid)) errors.push(`Duplicate rule ID: "${r.uid}"`);
+    else seen.add(r.uid);
+    r.pre.filter(t => t.t === 'ref').forEach(tok => {
+      if (!knownPre.has(tok.id))
+        errors.push(`${label}: pre-condition "${tok.id}" is not defined`);
+    });
+    if (!r.con.l.trim()) errors.push(`${label}: constraint operand ID is required`);
+    if (!r.con.r.trim()) errors.push(`${label}: constraint value is required`);
+  });
+  return errors;
+}
+
+function showValidation(errors) {
+  const flash = document.getElementById('validationFlash');
+  const list  = document.getElementById('validationList');
+  list.innerHTML = errors.map(e => `<li>${escHtml(e)}</li>`).join('');
+  flash.style.display = 'block';
+  flash.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideValidation() {
+  document.getElementById('validationFlash').style.display = 'none';
+}
+
+/* ══════════════════════════════════════════════
+   EXPORT
+══════════════════════════════════════════════ */
+function exportPolicy() {
+  const errors = validate();
+  if (errors.length) { showValidation(errors); return; }
+  hideValidation();
+  downloadJSON();
+}
+
+function copyJSON() {
+  const json = JSON.stringify(buildPolicy(), null, 2);
+  navigator.clipboard.writeText(json).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '[ COPIED! ]';
+    btn.classList.add('flash');
+    setTimeout(() => { btn.textContent = '[ COPY ]'; btn.classList.remove('flash'); }, 1800);
+  });
+}
+
+function downloadJSON() {
+  const errors = validate();
+  if (errors.length) { showValidation(errors); return; }
+  hideValidation();
+  const json = JSON.stringify(buildPolicy(), null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (S.meta.uuid || 'policy').replace(/[^a-z0-9_:-]/gi, '_') + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ══════════════════════════════════════════════
+   BUILD POLICY OBJECT
+══════════════════════════════════════════════ */
+function buildPolicy() {
+  const defs = S.preDefs || [];
+  const obligations = S.rules.filter(r => r.type === 'obligation');
+  const permissions = S.rules.filter(r => r.type === 'permission');
+  const group = {};
+  if (S.setUuid) group.uuid = S.setUuid;
+  if (obligations.length) group.obligations = obligations.map(buildEngineRule);
+  if (permissions.length) group.permissions = permissions.map(buildEngineRule);
+
+  return {
+    uuid: S.meta.uuid,
+    ...(S.meta.name    ? { name:    S.meta.name    } : {}),
+    ...(S.meta.version ? { version: S.meta.version } : {}),
+    ...(S.meta.date    ? { date:    S.meta.date    } : {}),
+    preConditions: defs.map(d => ({
+      uuid: d.id,
+      ...(d.label       ? { label:       d.label       } : {}),
+      ...(d.description ? { description: d.description } : {}),
+      predicateConstraints: [{ leftOperand: d.l, operator: d.op, rightOperand: d.r }]
+    })),
+    set: [group]
+  };
+}
+
+function buildEngineRule(r) {
+  return {
+    uuid: r.uid,
+    ...(r.label       ? { label:       r.label       } : {}),
+    ...(r.description ? { description: r.description } : {}),
+    preConditionConstraints: buildPreCondConstraints(r.pre),
+    predicateConstraints: [{ leftOperand: r.con.l, operator: r.con.op, rightOperand: r.con.r }]
+  };
+}
+
+function buildPreCondConstraints(pre) {
+  const refs = pre.filter(t => t.t === 'ref');
+  if (refs.length === 0) return [];
+  if (refs.length === 1) return [{ uuid: refs[0].id }];
+  // Determine dominant operator (and/or) from the token list
+  const opTokens = pre.filter(t => t.t === 'and' || t.t === 'or');
+  const op = opTokens.length && opTokens.every(t => t.t === 'or') ? 'or' : 'and';
+  return [{ operator: op, list: refs.map(t => ({ uuid: t.id })) }];
+}
+
+function parseVal(s) {
+  if (s === 'true')  return true;
+  if (s === 'false') return false;
+  const n = Number(s);
+  return (!isNaN(n) && s.trim() !== '') ? n : s;
+}
+
+/* ══════════════════════════════════════════════
+   SYNTAX HIGHLIGHT
+══════════════════════════════════════════════ */
+function syntaxHighlight(raw) {
+  const esc = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return esc.replace(
+    /("(?:\\u[0-9a-fA-F]{4}|\\[^u]|[^\\"])*")\s*:?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+    (match, str, bool, num, offset) => {
+      if (str !== undefined) {
+        const after = esc.slice(offset + match.length).trimStart();
+        return after[0] === ':' ? `<span class="jk">${str}</span>:` : `<span class="js">${str}</span>`;
+      }
+      if (bool !== undefined) return `<span class="jb">${bool}</span>`;
+      if (num  !== undefined) return `<span class="jn">${num}</span>`;
+      return match;
+    });
+}
+
+/* ══════════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════════ */
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function escAttr(s) { return escHtml(s); }
+
+/* ── DARK MODE ── */
+const ROOT = document.documentElement;
+function applyDark(dark) {
+  ROOT.classList.toggle('dark', dark);
+  document.getElementById('modeIcon').textContent  = dark ? '◐' : '◑';
+  document.getElementById('modeLabel').textContent = dark ? 'LIGHT' : 'DARK';
+}
+function toggleDark() {
+  const next = !ROOT.classList.contains('dark');
+  localStorage.setItem('pg-dark', next ? '1' : '0');
+  applyDark(next);
+}
+applyDark(ROOT.classList.contains('dark'));
+</script>
+</body>
+</html>

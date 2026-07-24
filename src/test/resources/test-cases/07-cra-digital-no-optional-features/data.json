@@ -1,0 +1,27 @@
+{
+  "operands": {
+    "product/has-digital-element":                          "true",
+    "product/allow-configuration":                          "false",
+    "product/has-restricted-access":                        "false",
+    "product/process-data":                                 "false",
+    "product/use-external-services":                        "false",
+    "product/has-digital-interface":                        "false",
+    "product/has-available-security-updates":               "false",
+
+    "product/cybersecurity-level":                          3,
+    "values/appropriate-level":                             3,
+
+    "product/has-known-exploitable-vulnerabilities":        "true",
+    "product/ensure-integrity":                             "true",
+    "product/availability-of-essential-function":           "true",
+    "product/is-using-exploitation-mitigation-mechanisms":  "true",
+    "product/is-recording-security-information":            "true",
+    "product/is-updatable":                                 "true",
+    "product/document-product-vulnerabilities-and-components": "true",
+    "product/product-vulnerabilities-are-remediated":       "true",
+    "product/is-security-tested":                           "true",
+    "product/has-enforced-vulnerability-disclosure":        "true",
+    "product/has-shared-product-vulnerabilities":           "true",
+    "product/has-security-updates-securely-distributed":    "true"
+  }
+}

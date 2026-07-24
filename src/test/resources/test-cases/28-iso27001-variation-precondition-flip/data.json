@@ -1,0 +1,36 @@
+{
+  "operands": {
+    "org/commits-to-iso27001":     "true",
+    "org/has-information-assets":  "true",
+    "org/has-internet-access":     "true",
+    "org/has-remote-access":       "true",
+    "org/processes-personal-data": "false",
+    "org/has-cloud-services":      "false",
+    "org/has-web-applications":    "true",
+    "org/has-mobile-devices":      "true",
+
+    "access-control/policy-documented":          "true",
+    "access-control/model":                      "rbac",
+    "access-control/least-privilege-enforced":   "true",
+
+    "information/classification-scheme":         "defined",
+    "information/classification-levels":         3,
+    "information/asset-owner-assigned":          "true",
+
+    "authentication/mfa-enabled":                      "true",
+    "authentication/password-min-length":              12,
+    "authentication/failed-login-lockout-threshold":   5,
+
+    "malware-protection/deployed":                     "true",
+    "malware-protection/realtime-scan-enabled":        "true",
+    "malware-protection/signature-update-interval-hours": 24,
+
+    "cryptography/symmetric-algorithm":   "aes-256-gcm",
+    "cryptography/tls-min-version":       1.2,
+    "cryptography/key-management-policy": "documented",
+
+    "network/firewall-deployed":   "true",
+    "network/network-zones":       ["dmz", "internal"],
+    "network/ids-deployed":        "true"
+  }
+}

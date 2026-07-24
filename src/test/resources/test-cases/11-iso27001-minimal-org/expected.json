@@ -1,0 +1,23 @@
+{
+  "allow": true,
+  "obligations": {
+    "iso27001:A.5.15:obligation:policy-documented":      "satisfied",
+    "iso27001:A.5.15:obligation:model":                  "satisfied",
+    "iso27001:A.5.15:obligation:least-privilege":        "satisfied",
+    "iso27001:A.5.12:obligation:classification-scheme":  "satisfied",
+    "iso27001:A.5.12:obligation:classification-levels":  "satisfied",
+    "iso27001:A.5.12:obligation:asset-owner-assigned":   "satisfied",
+    "iso27001:A.8.5:obligation:mfa-enabled":             "inactive",
+    "iso27001:A.8.5:obligation:password-length":         "satisfied",
+    "iso27001:A.8.5:obligation:lockout-threshold":       "satisfied",
+    "iso27001:A.8.7:obligation:malware-deployed":        "inactive",
+    "iso27001:A.8.7:obligation:realtime-scan":           "inactive",
+    "iso27001:A.8.7:obligation:signature-update-interval": "inactive",
+    "iso27001:A.8.24:obligation:symmetric-algorithm":    "inactive",
+    "iso27001:A.8.24:obligation:tls-version":            "inactive",
+    "iso27001:A.8.24:obligation:key-management-policy":  "inactive",
+    "iso27001:A.8.20:obligation:firewall":               "inactive",
+    "iso27001:A.8.20:obligation:network-zones":          "inactive",
+    "iso27001:A.8.20:obligation:ids-deployed":           "inactive"
+  }
+}

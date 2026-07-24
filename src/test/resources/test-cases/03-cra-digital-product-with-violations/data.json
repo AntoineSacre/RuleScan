@@ -1,0 +1,35 @@
+{
+  "operands": {
+    "product/has-digital-element":                          "true",
+    "product/allow-configuration":                          "true",
+    "product/has-restricted-access":                        "true",
+    "product/process-data":                                 "true",
+    "product/use-external-services":                        "true",
+    "product/has-digital-interface":                        "true",
+    "product/has-available-security-updates":               "true",
+
+    "product/cybersecurity-level":                          1,
+    "values/appropriate-level":                             5,
+
+    "product/has-known-exploitable-vulnerabilities":        "false",
+    "product/has-secure-by-default-configuration":          "true",
+    "product/has-control-access-mecanism":                  "true",
+    "product/use-encrypted-data":                           "true",
+    "product/ensure-integrity":                             "true",
+    "product/respect-minimisation-of-data":                 "true",
+    "product/availability-of-essential-function":           "true",
+    "product/minimise-availability-issue-on-external-services": "true",
+    "product/has-limited-attack-surfaces":                  "true",
+    "product/is-using-exploitation-mitigation-mechanisms":  "true",
+    "product/is-recording-security-information":            "true",
+    "product/is-updatable":                                 "true",
+    "product/document-product-vulnerabilities-and-components": "true",
+    "product/product-vulnerabilities-are-remediated":       "true",
+    "product/is-security-tested":                           "false",
+    "product/publically-disclose-security-updates":         "true",
+    "product/has-enforced-vulnerability-disclosure":        "true",
+    "product/has-shared-product-vulnerabilities":           "true",
+    "product/has-security-updates-securely-distributed":    "true",
+    "product/security-updates-are-free-and-quickly-disseminated": "true"
+  }
+}

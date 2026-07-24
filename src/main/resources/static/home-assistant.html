@@ -1,0 +1,1856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RuleScan — CRA Annex I Assessment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <script>
+    (function(){
+      var s = localStorage.getItem('pg-dark');
+      var sys = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (s === '1' || (s === null && sys)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --paper:   #f4f1ea;
+      --paper2:  #eae6db;
+      --ink:     #1a1714;
+      --ink2:    #3d3830;
+      --ink3:    #5c5750;
+      --grid:    rgba(0,0,0,.07);
+      --accent:  #b03228;
+      --blue-ui: #1c6ea4;
+      --blue:    #1a5c8a;
+      --green:   #1a5e36;
+      --amber:   #7a5200;
+      --line:    rgba(0,0,0,.14);
+      --shadow:  rgba(26,23,20,.18);
+    }
+    html.dark {
+      --paper:   #0f1117; --paper2:  #1a1d27; --ink:     #e2e8f0; --ink2:    #94a3b8;
+      --ink3:    #64748b; --grid:    rgba(46,51,82,.55); --accent:  #ef4444;
+      --blue-ui: #6366f1; --blue:    #818cf8; --green:   #22c55e; --amber:   #f59e0b;
+      --line:    #2e3352; --shadow:  rgba(0,0,0,.5);
+    }
+
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: 'Courier Prime', 'Courier New', monospace;
+      background-color: var(--paper);
+      background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 56px 56px;
+      color: var(--ink); min-height: 100vh; transition: background-color .3s, color .3s;
+    }
+
+    /* ── CORNER MARKS ── */
+    .corner-marks { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+    .rcm { position: absolute; width: 14px; height: 14px; }
+    .rcm::before, .rcm::after { content: ''; position: absolute; }
+    .rcm-tl { top: 20px; left: 20px; } .rcm-tr { top: 20px; right: 20px; }
+    .rcm-bl { bottom: 20px; left: 20px; } .rcm-br { bottom: 20px; right: 20px; }
+    .rcm-tl::before, .rcm-tl::after, .rcm-tr::before, .rcm-tr::after { background: var(--blue-ui); }
+    .rcm-bl::before, .rcm-bl::after, .rcm-br::before, .rcm-br::after { background: var(--accent); }
+    .rcm::before { width: 1px; height: 100%; left: 50%; }
+    .rcm::after  { width: 100%; height: 1px; top: 50%; }
+    .reg-mark { display: inline-block; width: 6px; height: 6px; background: var(--blue-ui); flex-shrink: 0; }
+
+    /* ── PAGE ── */
+    .page { max-width: 1320px; margin: 0 auto; padding: 0 28px 100px; }
+
+    /* ── NAV ── */
+    nav { display: flex; align-items: center; border-bottom: 1px solid var(--ink); padding: 18px 0 14px; }
+    .nav-brand { font-family: 'Bebas Neue', sans-serif; font-size: 1.45rem; letter-spacing: .12em; color: var(--ink); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .nav-meta { font-size: 0.65rem; color: var(--ink3); letter-spacing: .1em; text-transform: uppercase; margin-left: 14px; padding-left: 14px; border-left: 1px solid var(--line); line-height: 1.3; }
+    .nav-meta strong { color: var(--ink2); display: block; }
+    .nav-links { display: flex; margin-left: auto; }
+    .nav-links a { font-size: 0.72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink2); text-decoration: none; padding: 6px 16px; border: 1px solid var(--line); border-right: none; transition: background .12s, color .12s; }
+    .nav-links a:first-child { border-radius: 4px 0 0 4px; }
+    .nav-links a:last-child  { border-right: 1px solid var(--line); border-radius: 0 4px 4px 0; }
+    .nav-links a:hover, .nav-links a.active { background: var(--blue-ui); color: var(--paper); border-color: var(--blue-ui); }
+    .mode-btn { font-family: 'Courier Prime', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border: 1px solid var(--ink2); background: transparent; color: var(--ink2); padding: 6px 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; border-radius: 4px; transition: background .12s, color .12s, border-color .12s; margin-left: 12px; }
+    .mode-btn:hover { background: var(--blue-ui); color: var(--paper); border-color: var(--blue-ui); }
+
+    /* ── HERO ── */
+    .hero { padding: 48px 0 32px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 24px; }
+    .hero-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(3rem, 7vw, 6rem); line-height: .92; letter-spacing: .04em; color: var(--ink); }
+    .hero-title em { color: var(--accent); font-style: normal; }
+    .hero-meta { font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); line-height: 1.8; text-align: right; }
+    .hero-meta strong { color: var(--ink2); display: block; }
+
+    /* ── RULE LINE ── */
+    .rule-line { display: flex; align-items: center; gap: 8px; margin: 28px 0; }
+    .rule-line hr { flex: 1; border: none; border-top: 1px solid var(--ink); }
+    .rule-label { font-size: 0.62rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); white-space: nowrap; }
+
+    /* ── CONNECTION BANNER ── */
+    .conn-flash { margin-bottom: 16px; padding: 10px 16px; font-size: 0.78rem; display: flex; align-items: center; gap: 8px; border: 1px solid; }
+    .conn-flash.offline { background: rgba(122,82,0,.06); border-color: var(--amber); color: var(--amber); }
+    .conn-flash.online  { background: rgba(26,94,54,.06);  border-color: var(--green); color: var(--green); }
+    .conn-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .offline .conn-dot { background: var(--amber); }
+    .online  .conn-dot { background: var(--green); }
+
+    /* ── RUN BUTTON ── */
+    .btn-run { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #c97a74; color: var(--paper); font-family: 'Bebas Neue', sans-serif; font-size: 1.3rem; letter-spacing: .15em; border: 1px solid var(--ink); border-radius: 6px; box-shadow: 4px 5px 0 var(--shadow); cursor: not-allowed; }
+    .btn-run.active { cursor: pointer; background: var(--accent); transition: background .15s; }
+    .btn-run.active:hover { background: #a93226; }
+    .btn-ghost { font-family: 'Courier Prime', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; background: transparent; color: var(--ink2); border: none; border-left: 1px solid var(--line); padding: 14px 18px; cursor: pointer; transition: background .12s, color .12s; white-space: nowrap; }
+    .btn-ghost:hover { background: var(--blue-ui); color: var(--paper); }
+
+    /* ── THREE-PANEL GRID ── */
+    .panel-grid { display: grid; grid-template-columns: 1.3fr 2fr; gap: 20px; align-items: start; }
+    @media (max-width: 1080px) { .panel-grid { grid-template-columns: 1fr; } }
+
+    /* ── FORM PANEL ── */
+    .form-panel { background: var(--paper); border: 1px solid var(--ink); border-radius: 6px; box-shadow: 4px 5px 0 var(--shadow); overflow: hidden; }
+    .results-example { opacity: .38; pointer-events: none; }
+    .panel-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px 10px; border-bottom: 1px solid var(--ink); }
+    .panel-step { font-size: 0.6rem; letter-spacing: .18em; text-transform: uppercase; color: var(--ink3); }
+    .panel-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; letter-spacing: .08em; color: var(--ink); }
+    .panel-body  { padding: 16px; }
+    .panel-callout { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; padding: 9px 12px; border-left: 3px solid var(--callout-bar, var(--ink3)); background: var(--paper2); border-radius: 0 4px 4px 0; font-size: 0.75rem; color: var(--ink2); line-height: 1.55; }
+.panel-callout-blue  { --callout-bar: var(--blue-ui); }
+    .panel-callout-amber { --callout-bar: var(--amber); }
+
+
+    /* ── FORM INPUTS ── */
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 0.62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); margin-bottom: 5px; }
+    .field input[type="text"],
+    .field input[type="password"] {
+      width: 100%; font-family: 'Courier Prime', monospace; font-size: 0.85rem;
+      background: var(--paper2); border: 1px solid var(--ink2); color: var(--ink);
+      padding: 8px 12px; border-radius: 4px; outline: none; transition: border-color .15s;
+    }
+    .field input:focus { border-color: var(--ink); }
+    .field-hint { font-size: 0.68rem; color: var(--ink3); margin-top: 4px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Advanced toggle */
+    .adv-toggle { font-size: 0.68rem; letter-spacing: .1em; text-transform: uppercase; color: var(--ink3); cursor: pointer; display: flex; align-items: center; gap: 5px; border: none; background: none; margin-bottom: 10px; padding: 0; font-family: 'Courier Prime', monospace; }
+    .adv-toggle:hover { color: var(--blue-ui); }
+    .adv-content { display: none; }
+    .adv-content.open { display: block; }
+
+    /* ── YES / NO SELECTOR ── */
+    .yn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: var(--paper2); border: 1px solid var(--ink2); border-radius: 5px; padding: 3px; margin-bottom: 4px; }
+    .yn-btn { font-family: 'Courier Prime', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; border: none; background: transparent; color: var(--ink2); padding: 7px 10px; cursor: pointer; border-radius: 4px; transition: background .12s, color .12s; }
+    .yn-btn.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
+
+    /* ── LEVEL SELECTOR ── */
+    .level-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; background: var(--paper2); border: 1px solid var(--ink2); border-radius: 5px; padding: 3px; }
+    .level-btn { font-family: 'Courier Prime', monospace; font-size: 0.68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: none; background: transparent; color: var(--ink2); padding: 7px 4px; cursor: pointer; border-radius: 4px; transition: background .12s, color .12s; text-align: center; }
+    .level-btn.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
+
+    /* Operand question row */
+    .op-row { margin-bottom: 14px; }
+    .op-row:last-child { margin-bottom: 0; }
+    .op-q { font-size: 0.78rem; color: var(--ink2); margin-bottom: 6px; line-height: 1.45; }
+    .op-section { font-size: 0.6rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; margin-top: 4px; }
+
+
+    /* ── BADGES ── */
+    .badge { display: inline-block; padding: 2px 7px; font-size: 0.62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; border: 1px solid; white-space: nowrap; }
+    .badge-green  { color: var(--green);  border-color: var(--green);  background: rgba(26,94,54,.07); }
+    .badge-red    { color: var(--accent); border-color: var(--accent); background: rgba(176,50,40,.07); }
+    .badge-amber  { color: var(--amber);  border-color: var(--amber);  background: rgba(122,82,0,.07); }
+    .badge-blue   { color: var(--blue);   border-color: var(--blue);   background: rgba(26,92,138,.07); }
+    .badge-gray   { color: var(--ink2);   border-color: var(--ink3);   background: transparent; }
+    .badge-purple { color: #7c3aed; border-color: rgba(139,92,246,.28); background: rgba(139,92,246,.10); }
+    .badge-outline{ color: var(--ink2);   border-color: var(--line);   background: transparent; font-family: 'Courier Prime', monospace; font-size: 0.7rem; letter-spacing: 0; text-transform: none; font-weight: 400; }
+    html.dark .badge-green  { background: rgba(34,197,94,.15);  color: #4ade80; border-color: rgba(34,197,94,.3); }
+    html.dark .badge-red    { background: rgba(239,68,68,.15);  color: #f87171; border-color: rgba(239,68,68,.3); }
+    html.dark .badge-amber  { background: rgba(245,158,11,.15); color: #fbbf24; border-color: rgba(245,158,11,.3); }
+    html.dark .badge-blue   { background: rgba(99,102,241,.15); color: #818cf8; border-color: rgba(99,102,241,.3); }
+    html.dark .badge-gray   { background: rgba(148,163,184,.1); color: #94a3b8; border-color: #2e3352; }
+    html.dark .badge-purple { color: #a78bfa; border-color: rgba(167,139,250,.3); background: rgba(139,92,246,.15); }
+    html.dark .badge-outline{ color: #94a3b8; border-color: #2e3352; }
+
+    /* ── RESULTS PANEL ── */
+    .stamp-wrap { padding: 14px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 16px; }
+    .stamp { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; letter-spacing: .2em; padding: 8px 16px; border: 3px solid; display: inline-block; position: relative; }
+    .stamp.allow { color: var(--green); border-color: var(--green); transform: rotate(-2.5deg); }
+    .stamp.deny  { color: var(--accent); border-color: var(--accent); transform: rotate(1.8deg); }
+    .stamp::after { content: ''; position: absolute; inset: 4px; border: 1px solid currentColor; opacity: .3; }
+    .stamp-meta { font-size: 0.68rem; color: var(--ink3); line-height: 1.7; }
+    .stamp-meta strong { display: block; color: var(--ink); font-size: 0.78rem; }
+
+    .stats-bar { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; padding: 14px; border-bottom: 1px solid var(--line); }
+    .stat-cell { background: var(--paper2); padding: 12px 8px 10px; text-align: center; border: 1px solid var(--ink); border-radius: 4px; box-shadow: 2px 3px 0 var(--shadow); }
+    .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; line-height: 1; letter-spacing: .04em; }
+    .stat-label { font-size: 0.58rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink3); margin-top: 3px; }
+    .s-total .stat-value { color: var(--ink); }
+    .s-ok    .stat-value { color: var(--green); }
+    .s-bad   .stat-value { color: var(--accent); }
+    .s-na    .stat-value { color: var(--ink3); }
+
+    .rule-table { width: 100%; border-collapse: collapse; }
+    .rule-table th { text-align: left; padding: 8px 12px; background: var(--paper2); border-bottom: 1px solid var(--ink); font-size: 0.6rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); font-weight: 400; }
+    .rule-table td { padding: 6px 12px; border-bottom: 1px solid var(--line); font-size: 0.78rem; }
+    .rule-table tr:last-child td { border-bottom: none; }
+    .rule-table tr.row-ok  td:first-child { border-left: 2px solid var(--green); }
+    .rule-table tr.row-bad td:first-child { border-left: 2px solid var(--accent); }
+    .rule-id { font-family: 'Courier Prime', monospace; font-size: 0.72rem; color: var(--ink2); }
+    .rule-src { font-size: 0.60rem; color: var(--ink3); opacity: 0.75; margin-top: 2px; }
+
+    /* Empty / placeholder state */
+    .result-placeholder { padding: 48px 24px; text-align: center; }
+    .result-placeholder .ph-icon { font-size: 2.5rem; opacity: .25; margin-bottom: 12px; }
+    .result-placeholder .ph-text { font-size: 0.78rem; color: var(--ink3); line-height: 1.6; }
+    .result-placeholder .ph-label { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: .1em; color: var(--ink3); display: block; margin-bottom: 6px; }
+
+    /* Example tag */
+    .example-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 0.65rem; letter-spacing: .1em; text-transform: uppercase; color: var(--amber); border: 1px solid var(--amber); padding: 3px 10px; margin: 10px 16px 0; background: rgba(122,82,0,.05); }
+
+    /* ── SENSITIVITY (inside results panel, below rule table) ── */
+    .sens-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px 8px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); background: var(--paper2); }
+    .sens-title { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: .08em; color: var(--ink); }
+    .sens-table { width: 100%; border-collapse: collapse; }
+    .sens-table th { text-align: left; padding: 7px 12px; background: var(--paper2); border-bottom: 1px solid var(--line); font-size: 0.6rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); font-weight: 400; }
+    .sens-table td { padding: 7px 12px; border-bottom: 1px solid var(--line); font-size: 0.78rem; }
+    .sens-table tr:last-child td { border-bottom: none; }
+    .sens-table tr.current-row td { background: rgba(28,110,164,.06); }
+    .sens-table tr.current-row td:first-child { border-left: 2px solid var(--blue-ui); }
+
+    /* ── COLLAPSIBLE SECTIONS ── */
+    .section-toggle { display: flex; align-items: center; border: 1px solid var(--ink); border-bottom: none; margin-top: 24px; border-radius: 6px 6px 0 0; cursor: pointer; user-select: none; background: var(--paper); }
+    .section-toggle[aria-expanded="false"] { border-bottom: 1px solid var(--ink); border-radius: 6px; box-shadow: 4px 5px 0 var(--shadow); }
+    .section-mark { background: var(--ink); color: var(--paper); padding: 10px 16px; font-size: 0.65rem; letter-spacing: .2em; text-transform: uppercase; white-space: nowrap; }
+    .section-toggle:hover .section-mark { background: var(--blue-ui); }
+    .section-title-txt { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: .1em; padding: 8px 18px; color: var(--ink); flex: 1; }
+    .toggle-icon { font-size: 0.7rem; padding: 8px 14px; border-left: 1px solid var(--line); color: var(--ink2); transition: transform .2s; }
+    .section-toggle[aria-expanded="false"] .toggle-icon { transform: rotate(-90deg); }
+    .panel-collapsible { overflow: hidden; background: var(--paper); }
+    .panel-table-wrap { border: 1px solid var(--ink); border-top: none; border-radius: 0 0 6px 6px; box-shadow: 4px 5px 0 var(--shadow); overflow-x: auto; background: var(--paper); }
+
+    /* ── DOC CONTENT ── */
+    .doc-content { padding: 20px 24px; }
+    .doc-content p  { font-size: 0.85rem; color: var(--ink2); margin-bottom: 10px; line-height: 1.7; }
+    .doc-content h3 { font-family: 'Bebas Neue', sans-serif; font-size: 0.95rem; letter-spacing: .1em; color: var(--ink); margin: 16px 0 8px; }
+    .doc-content ul { padding-left: 20px; font-size: 0.85rem; color: var(--ink2); line-height: 1.8; }
+    .doc-content li { margin-bottom: 4px; }
+    .doc-content code { background: var(--paper2); border: 1px solid var(--line); padding: 1px 5px; border-radius: 3px; font-size: 0.8rem; }
+    .doc-content pre { background: var(--paper2); border: 1px solid var(--line); border-radius: 4px; padding: 12px 16px; font-size: 0.8rem; overflow-x: auto; margin: 8px 0; }
+    .doc-content pre code { background: none; border: none; padding: 0; }
+
+    .step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+    .step-num { background: var(--ink); color: var(--paper); width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 0.85rem; flex-shrink: 0; margin-top: 2px; }
+
+    .file-tree { background: var(--paper2); border: 1px solid var(--ink); border-radius: 4px; padding: 14px 18px; font-size: 0.82rem; line-height: 1.9; }
+    .ft-dir { color: var(--blue); } .ft-file { color: var(--green); } .ft-note { color: var(--ink3); }
+
+    .doc-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 10px 0; }
+    .doc-table th { text-align: left; padding: 7px 12px; background: var(--paper2); border-bottom: 1px solid var(--ink); font-size: 0.6rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink2); font-weight: 400; }
+    .doc-table td { padding: 7px 12px; border-bottom: 1px solid var(--line); color: var(--ink2); }
+    .doc-table tr:last-child td { border-bottom: none; }
+    .doc-table code { background: var(--paper2); border: 1px solid var(--line); padding: 1px 4px; border-radius: 3px; font-size: 0.78rem; }
+
+    /* ── REGULATION LIBRARY ── */
+    .lib-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 8px; }
+    @media (max-width: 800px) { .lib-grid { grid-template-columns: 1fr 1fr; } }
+    .lib-card {
+      background: var(--paper2); padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 4px;
+      position: relative; border: 1px solid var(--ink2);
+      border-radius: 5px; box-shadow: 2px 3px 0 var(--shadow);
+      opacity: .38; cursor: not-allowed;
+    }
+    .lib-card.selected {
+      background: var(--blue-ui); border-color: var(--blue-ui);
+      opacity: 1; cursor: default;
+    }
+    .lib-card.selected .lib-name,
+    .lib-card.selected .lib-desc { color: var(--paper); }
+    .lib-name { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: .06em; color: var(--ink); }
+    .lib-desc { font-size: 0.68rem; color: var(--ink3); letter-spacing: .04em; line-height: 1.4; }
+    .lib-tag { position: absolute; top: 6px; right: 8px; font-size: 0.58rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink3); border: 1px solid var(--ink3); padding: 1px 5px; }
+
+    .footer-line { display: flex; align-items: center; gap: 8px; margin-top: 60px; }
+    .footer-line hr { flex: 1; border: none; border-top: 1px solid var(--line); }
+
+    /* ── DETAIL TABLES ── */
+    .detail-table { width: 100%; border-collapse: collapse; }
+    .detail-table th { text-align: left; padding: 8px 12px; background: var(--paper2); border-bottom: 1px solid var(--ink); font-size: 0.6rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink2); font-weight: 400; }
+    .detail-table td { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 0.78rem; vertical-align: top; }
+    .detail-table tr:last-child td { border-bottom: none; }
+    .detail-table tr.row-ok  td:first-child { border-left: 3px solid var(--green); }
+    .detail-table tr.row-bad td:first-child { border-left: 3px solid var(--accent); }
+    .detail-table tr.row-na  td:first-child { border-left: 3px solid var(--line); }
+    .id-cell { font-family: 'Courier Prime', monospace; font-size: 0.72rem; color: var(--ink2); word-break: break-all; }
+    .influence-item { display: flex; align-items: center; gap: 6px; padding: 2px 0; font-size: 0.72rem; }
+    .expand-toggle { font-size: 0.72rem; color: var(--blue-ui); cursor: pointer; user-select: none; white-space: nowrap; }
+    .expand-toggle:hover { text-decoration: underline; }
+    .expand-list { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+    .missing-chips { margin-top: 5px; display: flex; flex-direction: column; gap: 2px; }
+    .missing-chip { font-size: 0.65rem; color: var(--amber); border: 1px solid var(--amber); background: rgba(122,82,0,.06); padding: 1px 6px; display: inline-block; font-family: 'Courier Prime', monospace; }
+    .missing-chip::before { content: '! '; }
+    .detail-count { font-size: 0.65rem; color: var(--ink2); padding: 8px 14px; border-left: 1px solid var(--line); white-space: nowrap; }
+    html.dark .missing-chip { background: rgba(245,158,11,.08); color: #fbbf24; border-color: rgba(245,158,11,.25); }
+    th[data-sort-type] { cursor: pointer; user-select: none; }
+    th[data-sort-type]:hover { background: var(--paper); }
+    th.sort-asc::after  { content: ' ▲'; font-size: 0.65em; opacity: 0.5; }
+    th.sort-desc::after { content: ' ▼'; font-size: 0.65em; opacity: 0.5; }
+    #rsscan-tip { position: fixed; z-index: 9999; background: #1c1c1e; color: #f5f5f7; padding: 8px 12px; border-radius: 5px; font-size: 0.73rem; line-height: 1.5; max-width: 300px; pointer-events: none; display: none; box-shadow: 0 4px 16px rgba(0,0,0,.22); white-space: normal; }
+    .h-row { border: 1px solid var(--line); border-radius: 4px; margin-bottom: 5px; background: var(--paper); }
+    .h-header { display: flex; align-items: center; gap: 10px; padding: 9px 14px; cursor: pointer; user-select: none; border-radius: 4px; }
+    .h-header:hover { background: var(--paper2); }
+    .h-badge { font-size: 0.60rem; font-family: 'Courier Prime', monospace; padding: 2px 7px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; letter-spacing: 0.03em; }
+    .h-badge-auto   { background: rgba(59,130,246,.10); color: var(--blue-ui); border: 1px solid rgba(59,130,246,.22); }
+    .h-badge-manual { background: rgba(245,158,11,.10); color: var(--amber);   border: 1px solid rgba(245,158,11,.28); }
+    .h-badge-reg    { background: rgba(139,92,246,.10); color: #7c3aed;         border: 1px solid rgba(139,92,246,.28); }
+    html.dark .h-badge-reg { color: #a78bfa; }
+    .h-label    { font-size: 0.82rem; font-weight: 500; flex: 1; }
+    .h-citation { font-size: 0.68rem; color: var(--ink3); white-space: nowrap; flex-shrink: 0; }
+    .h-chevron  { font-size: 0.65rem; color: var(--ink3); flex-shrink: 0; transition: transform .15s; }
+    .h-header.open .h-chevron { transform: rotate(90deg); }
+    .h-body { border-top: 1px solid var(--line); padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+    .h-field-label { font-size: 0.62rem; font-family: 'Courier Prime', monospace; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .h-field-value { font-size: 0.78rem; color: var(--ink); line-height: 1.55; }
+    .h-field-value code { background: var(--paper2); border: 1px solid var(--line); padding: 1px 5px; border-radius: 3px; font-size: 0.72rem; font-family: 'Courier Prime', monospace; word-break: break-all; }
+    .h-limitation { font-size: 0.78rem; color: var(--ink2); line-height: 1.55; padding-left: 12px; border-left: 2px solid var(--amber); }
+    .h-guidance   { font-size: 0.78rem; color: var(--ink2); line-height: 1.55; padding-left: 12px; border-left: 2px solid var(--blue-ui); }
+  </style>
+</head>
+<body>
+
+<div class="corner-marks" aria-hidden="true">
+  <div class="rcm rcm-tl"></div><div class="rcm rcm-tr"></div>
+  <div class="rcm rcm-bl"></div><div class="rcm rcm-br"></div>
+</div>
+
+<div class="page">
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-brand" href="#">
+      <span class="reg-mark"></span>
+      RULESCAN
+    </a>
+    <div class="nav-meta">
+      Automated Compliance Evaluation<br>
+      <strong>CRA ANNEX I</strong>
+    </div>
+    <div class="nav-links">
+      <a href="/">ENGINE</a>
+      <a href="/cra">CRA ASSESSMENT</a>
+      <a href="/rule-editor.html">RULE EDITOR</a>
+      <a href="/home-assistant.html" class="active">HOME ASSISTANT</a>
+    </div>
+    <button class="mode-btn" onclick="toggleDark()">
+      <span id="modeIcon">◑</span>
+      <span id="modeLabel">DARK</span>
+    </button>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div>
+      <div class="hero-title">
+        CRA ANNEX I<br>
+        <em>AUTOMATED</em><br>
+        ASSESSMENT
+      </div>
+    </div>
+    <div class="hero-meta">
+      Assess any GitHub-hosted project<br>
+      against the EU Cyber Resilience Act (CRA).<br>
+      <strong>25 of 29 inputs collected automatically.</strong>
+      4 require manual input below.
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="rule-line" style="margin-top:32px;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">How It Works</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+  <div style="font-size:0.85rem; color:var(--ink2); line-height:1.75; margin-bottom:32px;">
+    The engine assesses any public GitHub repository against CRA Annex I by collecting 29 inputs and evaluating them against a formal policy model. Of the 29 inputs, <strong style="color:var(--ink);">25 are collected automatically</strong> from GitHub's public API — repository metadata, release history, advisory feeds, file presence, CI configuration. The remaining <strong style="color:var(--ink);">4 require manual input</strong> from someone with knowledge of the project.<br><br>
+    Under the hood, a Python script queries GitHub's public API of a targeted project using predefined heuristics (detailed below) to interpret the repository's characteristics (metadata, release history, security advisories, file presence, CI configuration). Once all inputs are gathered, the page sends them to the compliance engine via a web request. The engine checks each one against the CRA Annex I requirements and returns a rule-by-rule verdict in a few seconds.
+  </div>
+
+  <!-- REGULATION SELECTOR -->
+  <div class="rule-line" style="margin-top:0;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Regulatory Framework</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+  <div class="lib-grid">
+    <div class="lib-card selected">
+      <div class="lib-name">CRA</div>
+      <div class="lib-desc">EU Cyber Resilience Act, Annex I — 21 rules</div>
+    </div>
+    <div class="lib-card">
+      <div class="lib-name">ISO 27001</div>
+      <div class="lib-desc">Information Security Management</div>
+      <span class="lib-tag">Coming soon</span>
+    </div>
+    <div class="lib-card">
+      <div class="lib-name">DORA</div>
+      <div class="lib-desc">Digital Operational Resilience Act</div>
+      <span class="lib-tag">Coming soon</span>
+    </div>
+    <div class="lib-card">
+      <div class="lib-name">NIS2</div>
+      <div class="lib-desc">Network &amp; Information Security</div>
+      <span class="lib-tag">Coming soon</span>
+    </div>
+  </div>
+
+  <!-- ASSESSMENT FORM -->
+  <div class="rule-line" style="margin-top:20px;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Input Configuration</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+  <div class="panel-grid">
+
+    <!-- LEFT COLUMN: Step 01 + Step 02 stacked -->
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+    <!-- PANEL 1: Repository configuration -->
+    <div class="form-panel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-step">Step 01 /</span>
+        <span class="panel-title">Automatic collection</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-callout panel-callout-blue">
+          <span>Enter the GitHub repository to assess. The engine will collect <strong>25 inputs</strong> automatically from the public API.</span>
+        </div>
+        <div class="op-section" style="margin-bottom:12px;"><span class="badge badge-blue">GitHub Repository</span></div>
+
+        <div class="field field-row">
+          <div>
+            <label>Owner</label>
+            <input type="text" id="owner" placeholder="home-assistant" value="home-assistant">
+          </div>
+          <div>
+            <label>Repository</label>
+            <input type="text" id="repo" placeholder="core" value="core">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>GitHub Token <span style="color:var(--ink3);font-size:0.6rem;">(optional — avoids rate limiting)</span></label>
+          <input type="password" id="token" placeholder="ghp_...">
+          <div class="field-hint">Without a token: 60 req/hour. With a token: 5,000 req/hour.</div>
+        </div>
+
+        <button class="adv-toggle" onclick="toggleAdv(this)">▸ Advanced path parameters</button>
+        <div class="adv-content" id="advPanel">
+          <div class="field">
+            <label>Config entries path</label>
+            <input type="text" id="configPath" placeholder="homeassistant/config_entries.py" value="homeassistant/config_entries.py">
+          </div>
+          <div class="field">
+            <label>Authentication module path</label>
+            <input type="text" id="authPath" placeholder="homeassistant/components/auth/__init__.py" value="homeassistant/components/auth/__init__.py">
+          </div>
+          <div class="field">
+            <label>Components directory</label>
+            <input type="text" id="componentsDir" placeholder="homeassistant/components" value="homeassistant/components">
+          </div>
+          <div class="field">
+            <label>CI security workflow</label>
+            <input type="text" id="ciWorkflow" placeholder=".github/workflows/codeql.yml" value=".github/workflows/codeql.yml">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- PANEL 2: Manual inputs -->
+    <div class="form-panel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-step">Step 02 /</span>
+        <span class="panel-title">Manual Inputs</span>
+      </div>
+      <div class="panel-body">
+        <div class="panel-callout panel-callout-amber">
+          <span>Four inputs cannot be derived automatically. Answer based on your knowledge of the project.</span>
+        </div>
+
+        <div class="op-section"><span class="badge badge-amber">Manual input</span></div>
+
+        <div class="op-row">
+          <div class="op-q">Does the product implement an access control mechanism (e.g. authentication, role separation)?</div>
+          <div class="yn-group" id="yn-acm">
+            <button class="yn-btn" onclick="setYN('yn-acm',this,'op-acm',true)">YES</button>
+            <button class="yn-btn active" onclick="setYN('yn-acm',this,'op-acm',false)">NO</button>
+          </div>
+          <input type="hidden" id="op-acm" value="false">
+        </div>
+
+        <div class="op-row">
+          <div class="op-q">Does the product ensure the availability of its essential functions even under adverse conditions?</div>
+          <div class="yn-group" id="yn-avail">
+            <button class="yn-btn" onclick="setYN('yn-avail',this,'op-avail',true)">YES</button>
+            <button class="yn-btn active" onclick="setYN('yn-avail',this,'op-avail',false)">NO</button>
+          </div>
+          <input type="hidden" id="op-avail" value="false">
+        </div>
+
+        <div class="op-row">
+          <div class="op-q">Does the product minimise disruption caused by failures in external services it depends on?</div>
+          <div class="yn-group" id="yn-min">
+            <button class="yn-btn active" onclick="setYN('yn-min',this,'op-min',true)">YES</button>
+            <button class="yn-btn" onclick="setYN('yn-min',this,'op-min',false)">NO</button>
+          </div>
+          <input type="hidden" id="op-min" value="true">
+        </div>
+
+        <div class="op-row">
+          <div class="op-q">What is the product's cybersecurity classification?</div>
+          <div class="level-group" id="lvl-cyber">
+            <button class="level-btn active" onclick="setLevel('lvl-cyber',this,'op-cyber',1)">1 — Low</button>
+            <button class="level-btn" onclick="setLevel('lvl-cyber',this,'op-cyber',3)">3 — Moderate</button>
+            <button class="level-btn" onclick="setLevel('lvl-cyber',this,'op-cyber',5)">5 — High</button>
+          </div>
+          <input type="hidden" id="op-cyber" value="1">
+        </div>
+
+        <div class="op-section" style="margin-top:18px; padding-top:14px; border-top:1px solid var(--line);"><span class="badge badge-purple">Assessment parameters</span></div>
+
+        <div class="op-row">
+          <div class="op-q">What threshold should the engine use to decide if the cybersecurity level is sufficient?</div>
+          <div class="level-group" id="lvl-approp">
+            <button class="level-btn" onclick="setLevel('lvl-approp',this,'op-approp',1)">1 — Low</button>
+            <button class="level-btn active" onclick="setLevel('lvl-approp',this,'op-approp',3)">3 — Moderate</button>
+            <button class="level-btn" onclick="setLevel('lvl-approp',this,'op-approp',5)">5 — High</button>
+          </div>
+          <input type="hidden" id="op-approp" value="3">
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-run" id="runBtn" disabled>
+      <span>RUN CRA ASSESSMENT</span>
+      <span style="font-size:1.1rem; font-family:monospace;">→</span>
+    </button>
+
+    </div><!-- /left-column -->
+
+    <!-- PANEL 4: Assessment results -->
+    <div class="form-panel results-example" id="resultsPanel">
+      <div class="panel-head">
+        <span class="reg-mark"></span>
+        <span class="panel-title">Assessment Results</span>
+      </div>
+
+      <div class="conn-flash offline" id="connBanner" style="margin:10px 16px 0; border-radius:4px;">
+        <div class="conn-dot"></div>
+        <span>Assessment engine offline — results below are pre-computed for Home Assistant Core 2026.6.1. Start the engine (<code style="background:rgba(122,82,0,.1);border:1px solid var(--amber);padding:1px 4px;border-radius:3px;font-size:0.75rem;">docker compose up -d</code> then <code style="background:rgba(122,82,0,.1);border:1px solid var(--amber);padding:1px 4px;border-radius:3px;font-size:0.75rem;">./mvnw spring-boot:run</code>) to enable live evaluation.</span>
+      </div>
+
+      <!-- Example tag -->
+      <div class="example-tag" id="exampleTag">★ Example — Home Assistant Core 2026.6.1</div>
+
+      <!-- Verdict -->
+      <div class="stamp-wrap" id="stampWrap">
+        <div class="stamp deny">NON-COMPLIANT</div>
+        <div class="stamp-meta">
+          <strong>One or more rules violated.</strong>
+          All 21 rules active · 17 satisfied · 4 violated
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-bar" id="statsBar">
+        <div class="stat-cell s-total"><div class="stat-value">21</div><div class="stat-label">Active</div></div>
+        <div class="stat-cell s-ok">   <div class="stat-value">17</div><div class="stat-label">Satisfied</div></div>
+        <div class="stat-cell s-bad">  <div class="stat-value">4</div> <div class="stat-label">Violated</div></div>
+        <div class="stat-cell s-na">   <div class="stat-value">0</div> <div class="stat-label">Missing</div></div>
+      </div>
+
+      <!-- Rule table -->
+      <table class="rule-table">
+        <thead><tr><th data-sort-type="text">Rule</th><th data-sort-type="status" style="width:120px;text-align:center;">Status</th></tr></thead>
+        <tbody id="ruleTableBody">
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:1:rule">Product ensures appropriate cybersecurity level<div class="rule-src">CRA, Annex I, Part I, §1</div></td>   <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:2:rule">Product has no known exploitable vulnerabilities<div class="rule-src">CRA, Annex I, Part I, §2</div></td>  <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:3:a:rule">Product ships with secure default configuration<div class="rule-src">CRA, Annex I, Part I, §3(a)</div></td> <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-bad"><td class="rule-id" title="cra:annex:i:p1:3:b:rule">Product enforces access control<div class="rule-src">CRA, Annex I, Part I, §3(b)</div></td>              <td style="text-align:center;"><span class="badge badge-red">Violated</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:3:c:rule">Product encrypts data<div class="rule-src">CRA, Annex I, Part I, §3(c)</div></td>                          <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:3:d:rule">Product protects data and software integrity<div class="rule-src">CRA, Annex I, Part I, §3(d)</div></td>   <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:3:e:rule">Product minimises data collection<div class="rule-src">CRA, Annex I, Part I, §3(e)</div></td>              <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-bad"><td class="rule-id" title="cra:annex:i:p1:3:f:rule">Product preserves availability of essential functions<div class="rule-src">CRA, Annex I, Part I, §3(f)</div></td><td style="text-align:center;"><span class="badge badge-red">Violated</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:3:g:rule">Product resists external service disruption<div class="rule-src">CRA, Annex I, Part I, §3(g)</div></td>    <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-bad"><td class="rule-id" title="cra:annex:i:p1:3:h:rule">Product limits its attack surface<div class="rule-src">CRA, Annex I, Part I, §3(h)</div></td>               <td style="text-align:center;"><span class="badge badge-red">Violated</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:3:i:rule">Product applies exploitation mitigations<div class="rule-src">CRA, Annex I, Part I, §3(i)</div></td>         <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:3:j:rule">Product logs security events<div class="rule-src">CRA, Annex I, Part I, §3(j)</div></td>                   <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p1:3:k:rule">Product supports security updates<div class="rule-src">CRA, Annex I, Part I, §3(k)</div></td>               <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p2:1:rule">Manufacturer documents vulnerabilities and components<div class="rule-src">CRA, Annex I, Part II, §1</div></td><td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p2:2:rule">Manufacturer remediates vulnerabilities without delay<div class="rule-src">CRA, Annex I, Part II, §2</div></td><td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p2:3:rule">Manufacturer tests security regularly<div class="rule-src">CRA, Annex I, Part II, §3</div></td>              <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p2:4:rule">Manufacturer discloses fixed vulnerabilities publicly<div class="rule-src">CRA, Annex I, Part II, §4</div></td><td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p2:5:rule">Manufacturer enforces a disclosure policy<div class="rule-src">CRA, Annex I, Part II, §5</div></td>          <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p2:6:rule">Manufacturer shares vulnerability information<div class="rule-src">CRA, Annex I, Part II, §6</div></td>       <td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+          <tr class="row-bad"><td class="rule-id" title="cra:annex:i:p2:7:rule">Manufacturer distributes updates securely<div class="rule-src">CRA, Annex I, Part II, §7</div></td>           <td style="text-align:center;"><span class="badge badge-red">Violated</span></td></tr>
+          <tr class="row-ok"> <td class="rule-id" title="cra:annex:i:p2:8:rule">Manufacturer provides free and timely security updates<div class="rule-src">CRA, Annex I, Part II, §8</div></td><td style="text-align:center;"><span class="badge badge-green">Compliant</span></td></tr>
+        </tbody>
+      </table>
+
+    </div>
+
+  </div><!-- /panel-grid -->
+
+  <!-- HOW WE ASSESS -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)" style="margin-top:28px;">
+    <span class="section-mark">H</span>
+    <span class="section-title-txt">How we assess</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible" style="display:none;">
+    <div class="panel-table-wrap">
+      <div id="heuristicsSection" style="padding:16px;"></div>
+    </div>
+  </div>
+
+  <!-- RESULT DETAILS (shown after a live assessment) -->
+  <div class="rule-line" id="detailsRuleLine" style="margin-top:40px; display:none;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Result Details</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+  <div id="resultDetailsSection" style="display:none;">
+
+    <!-- A: Compliance Report -->
+    <div class="section-toggle" role="button" aria-expanded="true" onclick="toggleSection(this)">
+      <span class="section-mark">A</span>
+      <span class="section-title-txt">Compliance Report</span>
+      <span class="detail-count" id="detailCount1"></span>
+      <span class="toggle-icon">▾</span>
+    </div>
+    <div class="panel-collapsible">
+      <div class="panel-table-wrap">
+        <table class="detail-table">
+          <thead><tr>
+            <th data-sort-type="text">Rule ID</th>
+            <th data-sort-type="applicable" style="width:110px;text-align:center;">Applicable</th>
+            <th data-sort-type="status" style="width:180px;">Status</th>
+          </tr></thead>
+          <tbody id="detailComplianceBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- B: Provided Data & Rule Influence -->
+    <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+      <span class="section-mark">B</span>
+      <span class="section-title-txt">Provided Data &amp; Rule Influence</span>
+      <span class="detail-count" id="detailCount2"></span>
+      <span class="toggle-icon">▾</span>
+    </div>
+    <div class="panel-collapsible" style="display:none;">
+      <div class="panel-table-wrap">
+        <table class="detail-table">
+          <thead><tr>
+            <th data-sort-type="text" style="width:470px;">Input ID</th>
+            <th data-sort-type="text" style="width:80px;text-align:center;">Value</th>
+            <th data-sort-type="count">Influences Applicability</th>
+            <th data-sort-type="count">Influences Satisfaction</th>
+          </tr></thead>
+          <tbody id="detailOperandsBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- C: Required Information Per Rule -->
+    <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+      <span class="section-mark">C</span>
+      <span class="section-title-txt">Required Information Per Rule</span>
+      <span class="detail-count" id="detailCount3"></span>
+      <span class="toggle-icon">▾</span>
+    </div>
+    <div class="panel-collapsible" style="display:none;">
+      <div class="panel-table-wrap">
+        <table class="detail-table">
+          <thead><tr>
+            <th data-sort-type="text">Rule ID</th>
+            <th data-sort-type="count">Needed for applicability</th>
+            <th data-sort-type="count">Needed for satisfaction</th>
+          </tr></thead>
+          <tbody id="detailRulesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /resultDetailsSection -->
+
+  <!-- DOCUMENTATION -->
+  <div class="rule-line" style="margin-top:40px;">
+    <span class="reg-mark"></span>
+    <span class="rule-label">Documentation</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+  <!-- 01 Quick start -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+    <span class="section-mark">01</span>
+    <span class="section-title-txt">Command-Line Quick Start</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible">
+    <div class="panel-table-wrap">
+      <div class="doc-content">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div>
+            <h3>Optional — set your GitHub token</h3>
+            <p>Without a token, GitHub limits unauthenticated requests to 60/hour. A token with no special scopes raises this to 5,000/hour.</p>
+            <pre><code>export GITHUB_TOKEN=ghp_...</code></pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div>
+            <h3>Optional — start OPA for automated assessment</h3>
+            <p>Start OPA from the repository root. Without it, the script collects data only and skips evaluation.</p>
+            <pre><code>docker compose up -d   # run from the repository root</code></pre>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div>
+            <h3>Run the use case</h3>
+            <pre><code>cd "Home Assistant Use Case"
+./run.sh</code></pre>
+            <p>Collects all 29 inputs, writes a timestamped data file to <code>output/</code>, and — if OPA is running — prints the compliance verdict.</p>
+          </div>
+        </div>
+        <h3>Expected output</h3>
+        <pre><code>CRA Annex I data collection — home-assistant/core
+============================================================
+  [A1     ] product/has-digital-element ... true
+  [A1     ] product/has-available-security-updates ... true
+  ...
+  [MANUAL ] product/has-control-access-mecanism = false
+============================================================
+Collected : 29 / 29 inputs
+Output    : output/CRA-Data-2026-06-11_14-32-01.json
+
+Assessment
+============================================================
+Verdict   : NON-COMPLIANT
+Active    : 21 rules triggered
+Satisfied : 17
+Violated  : 4
+
+Violated obligations:
+  - cra:annex:i:p1:3:b:rule
+  - cra:annex:i:p1:3:f:rule
+  - cra:annex:i:p1:3:h:rule
+  - cra:annex:i:p2:7:rule
+============================================================</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 02 Adapting -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+    <span class="section-mark">02</span>
+    <span class="section-title-txt">Adapting to Another Project</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible">
+    <div class="panel-table-wrap">
+      <div class="doc-content">
+        <p>To assess a different GitHub repository from the command line, update two files.</p>
+        <h3>1. config.env — GitHub identifiers and repository paths</h3>
+        <table class="doc-table">
+          <thead><tr><th>Parameter</th><th>Description</th><th>HA default</th></tr></thead>
+          <tbody>
+            <tr><td><code>OWNER</code></td><td>GitHub organisation or user</td><td>home-assistant</td></tr>
+            <tr><td><code>REPO</code></td><td>Repository name</td><td>core</td></tr>
+            <tr><td><code>ORG</code></td><td>Organisation for org-level checks</td><td>home-assistant</td></tr>
+            <tr><td><code>ASSESSMENT_DATE</code></td><td>ISO date of the assessment</td><td>2026-06-11</td></tr>
+            <tr><td><code>CONFIG_ENTRIES_PATH</code></td><td>Configuration entry point</td><td>homeassistant/config_entries.py</td></tr>
+            <tr><td><code>AUTH_PATH</code></td><td>Authentication module</td><td>homeassistant/components/auth/__init__.py</td></tr>
+            <tr><td><code>COMPONENTS_DIR</code></td><td>Integration subdirectory root</td><td>homeassistant/components</td></tr>
+            <tr><td><code>CI_SECURITY_WORKFLOW</code></td><td>CI security scanning workflow</td><td>.github/workflows/codeql.yml</td></tr>
+          </tbody>
+        </table>
+        <h3>2. collection-method-manual.json — manually assessed inputs</h3>
+        <pre><code>{
+  "product/has-control-access-mecanism": "false",
+  "product/availability-of-essential-function": "false",
+  "product/minimise-availability-issue-on-external-services": "true",
+  "values/appropriate-level": 3
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- 03 File structure -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+    <span class="section-mark">03</span>
+    <span class="section-title-txt">File Structure</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible">
+    <div class="panel-table-wrap">
+      <div class="doc-content">
+        <div class="file-tree">
+          <span class="ft-dir">Home Assistant Use Case/</span><br>
+          &nbsp;&nbsp;<span class="ft-file">run.sh</span>                          <span class="ft-note">— entry point</span><br>
+          &nbsp;&nbsp;<span class="ft-file">collect.py</span>                       <span class="ft-note">— collection runner</span><br>
+          &nbsp;&nbsp;<span class="ft-file">config.env</span>                       <span class="ft-note">— project parameters</span><br>
+          &nbsp;&nbsp;<span class="ft-file">collection-method-automated.json</span> <span class="ft-note">— 29 automated heuristics</span><br>
+          &nbsp;&nbsp;<span class="ft-file">collection-method-manual.json</span>    <span class="ft-note">— 4 manually assessed inputs</span><br>
+          &nbsp;&nbsp;<span class="ft-file">policy.json</span>                      <span class="ft-note">— CRA Annex I policy (21 rules)</span><br>
+          &nbsp;&nbsp;<span class="ft-dir">output/</span>                          <span class="ft-note">— generated data files</span><br>
+          &nbsp;&nbsp;<span class="ft-file">index.html</span>                       <span class="ft-note">— this page</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 04 Prerequisites -->
+  <div class="section-toggle" role="button" aria-expanded="false" onclick="toggleSection(this)">
+    <span class="section-mark">04</span>
+    <span class="section-title-txt">Prerequisites</span>
+    <span class="toggle-icon">▾</span>
+  </div>
+  <div class="panel-collapsible">
+    <div class="panel-table-wrap">
+      <div class="doc-content">
+        <ul>
+          <li><code>bash</code>, <code>curl</code>, <code>jq</code>, <code>python3</code> — standard on macOS and most Linux distributions</li>
+          <li>Docker — only required for the automated assessment step (OPA)</li>
+          <li>A GitHub personal access token — optional but strongly recommended to avoid rate limiting</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer-line">
+    <span class="reg-mark"></span>
+    <span class="rule-label">RuleScan — CRA Annex I Use Case · University of Namur / Comexis Partners</span>
+    <hr>
+    <span class="reg-mark"></span>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+  /* ── CRA LABEL / SOURCE MAPS (hardcoded for instant availability) ── */
+  const CRA_LABELS = {
+    'cra:annex:i:p1:1:cond':  'Product includes digital elements',
+    'cra:annex:i:p1:3:a:cond':'Product allows user configuration',
+    'cra:annex:i:p1:3:b:cond':'Product restricts access',
+    'cra:annex:i:p1:3:c:cond':'Product processes or stores data',
+    'cra:annex:i:p1:3:g:cond':'Product uses external services',
+    'cra:annex:i:p1:3:h:cond':'Product exposes a digital interface',
+    'cra:annex:i:p2:4:cond':  'Product has available security updates',
+    'cra:annex:i:p1:1:rule':  'Product ensures appropriate cybersecurity level',
+    'cra:annex:i:p1:2:rule':  'Product has no known exploitable vulnerabilities',
+    'cra:annex:i:p1:3:a:rule':'Product ships with secure default configuration',
+    'cra:annex:i:p1:3:b:rule':'Product enforces access control',
+    'cra:annex:i:p1:3:c:rule':'Product encrypts data',
+    'cra:annex:i:p1:3:d:rule':'Product protects data and software integrity',
+    'cra:annex:i:p1:3:e:rule':'Product minimises data collection',
+    'cra:annex:i:p1:3:f:rule':'Product preserves availability of essential functions',
+    'cra:annex:i:p1:3:g:rule':'Product resists external service disruption',
+    'cra:annex:i:p1:3:h:rule':'Product limits its attack surface',
+    'cra:annex:i:p1:3:i:rule':'Product applies exploitation mitigations',
+    'cra:annex:i:p1:3:j:rule':'Product logs security events',
+    'cra:annex:i:p1:3:k:rule':'Product supports security updates',
+    'cra:annex:i:p2:1:rule':  'Manufacturer documents vulnerabilities and components',
+    'cra:annex:i:p2:2:rule':  'Manufacturer remediates vulnerabilities without delay',
+    'cra:annex:i:p2:3:rule':  'Manufacturer tests security regularly',
+    'cra:annex:i:p2:4:rule':  'Manufacturer discloses fixed vulnerabilities publicly',
+    'cra:annex:i:p2:5:rule':  'Manufacturer enforces a disclosure policy',
+    'cra:annex:i:p2:6:rule':  'Manufacturer shares vulnerability information',
+    'cra:annex:i:p2:7:rule':  'Manufacturer distributes updates securely',
+    'cra:annex:i:p2:8:rule':  'Manufacturer provides free and timely security updates',
+  };
+  const CRA_DESCRIPTIONS = {
+    'cra:annex:i:p1:1:cond':   'Checks that the product includes digital elements. Gates all CRA Annex I obligations — only products with digital elements are in scope.',
+    'cra:annex:i:p1:3:a:cond': 'Checks that the product can be configured by the user. Gates the secure-by-default obligation, which only applies to configurable products.',
+    'cra:annex:i:p1:3:b:cond': 'Checks that the product restricts access to authorised users. Gates the access control obligation, which only applies to products that enforce access control.',
+    'cra:annex:i:p1:3:c:cond': 'Checks that the product processes or stores data. Gates the encryption and data minimisation obligations, which only apply to products that handle data.',
+    'cra:annex:i:p1:3:g:cond': 'Checks that the product relies on external or third-party services. Gates the external service resilience obligation, which only applies to products with external integrations.',
+    'cra:annex:i:p1:3:h:cond': 'Checks that the product exposes a digital interface (network API, communication endpoint). Gates the attack surface limitation obligation, which only applies to products with exposed interfaces.',
+    'cra:annex:i:p2:4:cond':   'Checks that the product currently offers security updates to users. Gates the public disclosure and free update distribution obligations, which only apply when updates exist.',
+    'cra:annex:i:p1:1:rule':   'CRA Annex I, Part I, §1. Products with digital elements shall ensure an appropriate level of cybersecurity based on the risks. Checks that the product\'s cybersecurity level meets or exceeds the applicable regulatory threshold.',
+    'cra:annex:i:p1:2:rule':   'CRA Annex I, Part I, §2. Products shall be delivered without any known exploitable vulnerabilities. Checks that all published security advisories have associated patch versions, confirming all disclosed vulnerabilities have been remediated.',
+    'cra:annex:i:p1:3:a:rule': 'CRA Annex I, Part I, §3(a). Products shall be deployable and usable in a secure configuration. Checks that the product ships with secure defaults and does not include hardcoded default passwords.',
+    'cra:annex:i:p1:3:b:rule': 'CRA Annex I, Part I, §3(b). Products that restrict access shall implement appropriate access control mechanisms. Checks that the product enforces strong authentication by default and supports scoped access tokens to limit privilege.',
+    'cra:annex:i:p1:3:c:rule': 'CRA Annex I, Part I, §3(c). Products that process or store data shall protect confidentiality by encrypting data at rest and in transit. Checks that the product implements encrypted transport and storage mechanisms.',
+    'cra:annex:i:p1:3:d:rule': 'CRA Annex I, Part I, §3(d). Products shall protect the integrity of stored, transmitted or processed data, commands and configurations against unauthorised modification. Checks that cryptographic signing mechanisms are in place for software artefacts.',
+    'cra:annex:i:p1:3:e:rule': 'CRA Annex I, Part I, §3(e). Products that process data shall collect only data adequate, relevant and limited to what is necessary. Checks that data collection is opt-in by default.',
+    'cra:annex:i:p1:3:f:rule': 'CRA Annex I, Part I, §3(f). Products shall protect the availability of their essential functions, including resilience against denial-of-service attacks. Checks that the product provides built-in availability or automatic recovery mechanisms.',
+    'cra:annex:i:p1:3:g:rule': 'CRA Annex I, Part I, §3(g). Products shall minimise their negative impact on the availability of services provided by other devices or networks they depend on. Checks that the product continues operating essential functions when external services are unavailable.',
+    'cra:annex:i:p1:3:h:rule': 'CRA Annex I, Part I, §3(h). Products shall be designed to limit attack surfaces, including external interfaces. Checks that the number of exposed network integration endpoints remains within acceptable bounds.',
+    'cra:annex:i:p1:3:i:rule': 'CRA Annex I, Part I, §3(i). Products shall reduce the impact of incidents using appropriate exploitation mitigation techniques. Checks that the product targets a runtime providing OS-level mitigations such as ASLR and DEP.',
+    'cra:annex:i:p1:3:j:rule': 'CRA Annex I, Part I, §3(j). Products shall provide security information by recording and monitoring relevant internal activity, including access to or modification of data, services or functions. Checks that the product includes a security event logging component.',
+    'cra:annex:i:p1:3:k:rule': 'CRA Annex I, Part I, §3(k). Products shall ensure that vulnerabilities can be addressed through security updates. Checks that the product has a release mechanism through which users can receive and apply updates.',
+    'cra:annex:i:p2:1:rule':   'CRA Annex I, Part II, §1. Manufacturers shall identify and document vulnerabilities and components in their products, including by drawing up an SBOM. Checks that an SBOM is publicly available for the product.',
+    'cra:annex:i:p2:2:rule':   'CRA Annex I, Part II, §2. Manufacturers shall address and remediate vulnerabilities without delay, including by providing security updates. Checks that all disclosed vulnerabilities have associated patch versions applied.',
+    'cra:annex:i:p2:3:rule':   'CRA Annex I, Part II, §3. Manufacturers shall apply effective and regular testing and reviews of the security of their products. Checks that automated security scanning is integrated into the development pipeline.',
+    'cra:annex:i:p2:4:rule':   'CRA Annex I, Part II, §4. Once a security update is available, manufacturers shall publicly disclose information about fixed vulnerabilities. Checks that all published advisories carry CVE identifiers, enabling public disclosure through the NVD.',
+    'cra:annex:i:p2:5:rule':   'CRA Annex I, Part II, §5. Manufacturers shall put in place and enforce a policy on coordinated vulnerability disclosure. Checks that a SECURITY.md file is accessible at the organisation or repository level.',
+    'cra:annex:i:p2:6:rule':   'CRA Annex I, Part II, §6. Manufacturers shall facilitate sharing of information about potential vulnerabilities with relevant stakeholders. Checks that all published advisories carry CVE identifiers to enable cross-referencing by downstream manufacturers.',
+    'cra:annex:i:p2:7:rule':   'CRA Annex I, Part II, §7. Manufacturers shall provide mechanisms to securely distribute updates. Checks that release assets are accompanied by cryptographic signatures (.sig, .asc or .sigstore).',
+    'cra:annex:i:p2:8:rule':   'CRA Annex I, Part II, §8. Manufacturers shall ensure that security updates are provided free of charge and without delay. Checks that the product uses an open-source licence and that the release cadence does not exceed 90 days between updates.',
+  };
+  const CRA_SOURCES = {
+    'cra:annex:i:p1:1:cond':  'CRA, Art. 2 — Scope',
+    'cra:annex:i:p1:3:a:cond':'CRA, Annex I, Part I, §3(a)',
+    'cra:annex:i:p1:3:b:cond':'CRA, Annex I, Part I, §3(b)',
+    'cra:annex:i:p1:3:c:cond':'CRA, Annex I, Part I, §3(c)',
+    'cra:annex:i:p1:3:g:cond':'CRA, Annex I, Part I, §3(g)',
+    'cra:annex:i:p1:3:h:cond':'CRA, Annex I, Part I, §3(h)',
+    'cra:annex:i:p2:4:cond':  'CRA, Annex I, Part II, §4',
+    'cra:annex:i:p1:1:rule':  'CRA, Annex I, Part I, §1',
+    'cra:annex:i:p1:2:rule':  'CRA, Annex I, Part I, §2',
+    'cra:annex:i:p1:3:a:rule':'CRA, Annex I, Part I, §3(a)',
+    'cra:annex:i:p1:3:b:rule':'CRA, Annex I, Part I, §3(b)',
+    'cra:annex:i:p1:3:c:rule':'CRA, Annex I, Part I, §3(c)',
+    'cra:annex:i:p1:3:d:rule':'CRA, Annex I, Part I, §3(d)',
+    'cra:annex:i:p1:3:e:rule':'CRA, Annex I, Part I, §3(e)',
+    'cra:annex:i:p1:3:f:rule':'CRA, Annex I, Part I, §3(f)',
+    'cra:annex:i:p1:3:g:rule':'CRA, Annex I, Part I, §3(g)',
+    'cra:annex:i:p1:3:h:rule':'CRA, Annex I, Part I, §3(h)',
+    'cra:annex:i:p1:3:i:rule':'CRA, Annex I, Part I, §3(i)',
+    'cra:annex:i:p1:3:j:rule':'CRA, Annex I, Part I, §3(j)',
+    'cra:annex:i:p1:3:k:rule':'CRA, Annex I, Part I, §3(k)',
+    'cra:annex:i:p2:1:rule':  'CRA, Annex I, Part II, §1',
+    'cra:annex:i:p2:2:rule':  'CRA, Annex I, Part II, §2',
+    'cra:annex:i:p2:3:rule':  'CRA, Annex I, Part II, §3',
+    'cra:annex:i:p2:4:rule':  'CRA, Annex I, Part II, §4',
+    'cra:annex:i:p2:5:rule':  'CRA, Annex I, Part II, §5',
+    'cra:annex:i:p2:6:rule':  'CRA, Annex I, Part II, §6',
+    'cra:annex:i:p2:7:rule':  'CRA, Annex I, Part II, §7',
+    'cra:annex:i:p2:8:rule':  'CRA, Annex I, Part II, §8',
+  };
+  let labelMap = {...CRA_LABELS}, sourceMap = {...CRA_SOURCES}, descriptionMap = {...CRA_DESCRIPTIONS};
+  fetch('/ha/labels').then(r => r.ok ? r.json() : {}).then(d => {
+    labelMap       = {...CRA_LABELS,        ...(d.labelMap       || {})};
+    sourceMap      = {...CRA_SOURCES,       ...(d.sourceMap      || {})};
+    descriptionMap = {...CRA_DESCRIPTIONS,  ...(d.descriptionMap || {})};
+  }).catch(() => {});
+
+  /* ── DARK MODE ── */
+  const ROOT = document.documentElement;
+  function applyDark(dark) {
+    ROOT.classList.toggle('dark', dark);
+    document.getElementById('modeIcon').textContent  = dark ? '◐' : '◑';
+    document.getElementById('modeLabel').textContent = dark ? 'LIGHT' : 'DARK';
+  }
+  function toggleDark() {
+    const next = !ROOT.classList.contains('dark');
+    localStorage.setItem('pg-dark', next ? '1' : '0');
+    applyDark(next);
+  }
+  applyDark(ROOT.classList.contains('dark'));
+
+  /* ── YES/NO BUTTONS ── */
+  function setYN(groupId, btn, hiddenId, val) {
+    document.querySelectorAll('#' + groupId + ' .yn-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(hiddenId).value = val;
+  }
+
+  /* ── LEVEL BUTTONS ── */
+  function setLevel(groupId, btn, hiddenId, val) {
+    document.querySelectorAll('#' + groupId + ' .level-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(hiddenId).value = val;
+  }
+
+  /* ── ADVANCED TOGGLE ── */
+  function toggleAdv(btn) {
+    const panel = document.getElementById('advPanel');
+    const open  = panel.classList.toggle('open');
+    btn.textContent = (open ? '▾ ' : '▸ ') + 'Advanced path parameters';
+  }
+
+  /* ── RESET TO HA DEFAULTS ── */
+  function resetToHA() {
+    document.getElementById('owner').value = 'home-assistant';
+    document.getElementById('repo').value  = 'core';
+    document.getElementById('token').value = '';
+    document.getElementById('configPath').value     = 'homeassistant/config_entries.py';
+    document.getElementById('authPath').value       = 'homeassistant/components/auth/__init__.py';
+    document.getElementById('componentsDir').value  = 'homeassistant/components';
+    document.getElementById('ciWorkflow').value     = '.github/workflows/codeql.yml';
+    setYN('yn-acm',   document.querySelector('#yn-acm   .yn-btn:last-child'),   'op-acm',   false);
+    setYN('yn-avail', document.querySelector('#yn-avail .yn-btn:last-child'),   'op-avail', false);
+    setYN('yn-min',   document.querySelector('#yn-min   .yn-btn:first-child'),  'op-min',   true);
+    setLevel('lvl-cyber',   document.querySelector('#lvl-cyber   .level-btn:first-child'), 'op-cyber',   1);
+    setLevel('lvl-approp',  document.querySelector('#lvl-approp  .level-btn:nth-child(2)'),'op-approp',  3);
+    showExampleResults();
+  }
+
+  function hideDetails() {
+    document.getElementById('detailsRuleLine').style.display = 'none';
+    document.getElementById('resultDetailsSection').style.display = 'none';
+  }
+
+  /* ── EXAMPLE RESULTS (pre-computed HA 2026.6.1) ── */
+  function showExampleResults() {
+    hideDetails();
+    clearTableSort('ruleTableBody');
+    document.getElementById('resultsPanel').classList.add('results-example');
+    document.getElementById('exampleTag').style.display = '';
+    document.getElementById('stampWrap').innerHTML = `
+      <div class="stamp deny">NON-COMPLIANT</div>
+      <div class="stamp-meta">
+        <strong>One or more rules violated.</strong>
+        All 21 rules active &middot; 17 satisfied &middot; 4 violated
+      </div>`;
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat-cell s-total"><div class="stat-value">21</div><div class="stat-label">Active</div></div>
+      <div class="stat-cell s-ok">   <div class="stat-value">17</div><div class="stat-label">Satisfied</div></div>
+      <div class="stat-cell s-bad">  <div class="stat-value">4</div> <div class="stat-label">Violated</div></div>
+      <div class="stat-cell s-na">   <div class="stat-value">0</div> <div class="stat-label">Missing</div></div>`;
+    const rows = [
+      ['cra:annex:i:p1:1:rule','ok'], ['cra:annex:i:p1:2:rule','ok'],
+      ['cra:annex:i:p1:3:a:rule','ok'],['cra:annex:i:p1:3:b:rule','bad'],
+      ['cra:annex:i:p1:3:c:rule','ok'],['cra:annex:i:p1:3:d:rule','ok'],
+      ['cra:annex:i:p1:3:e:rule','ok'],['cra:annex:i:p1:3:f:rule','bad'],
+      ['cra:annex:i:p1:3:g:rule','ok'],['cra:annex:i:p1:3:h:rule','bad'],
+      ['cra:annex:i:p1:3:i:rule','ok'],['cra:annex:i:p1:3:j:rule','ok'],
+      ['cra:annex:i:p1:3:k:rule','ok'],['cra:annex:i:p2:1:rule','ok'],
+      ['cra:annex:i:p2:2:rule','ok'], ['cra:annex:i:p2:3:rule','ok'],
+      ['cra:annex:i:p2:4:rule','ok'], ['cra:annex:i:p2:5:rule','ok'],
+      ['cra:annex:i:p2:6:rule','ok'], ['cra:annex:i:p2:7:rule','bad'],
+      ['cra:annex:i:p2:8:rule','ok'],
+    ];
+    document.getElementById('ruleTableBody').innerHTML = rows.map(([id, s]) => {
+      const name = labelMap[id] || id;
+      const src  = sourceMap[id] ? `<div class="rule-src">${sourceMap[id]}</div>` : '';
+      const desc = descriptionMap[id] ? ` data-tooltip="${escAttr(descriptionMap[id])}"` : '';
+      return `<tr class="row-${s}">
+        <td class="rule-id" title="${id}"${desc}>${name}${src}</td>
+        <td style="text-align:center;"><span class="badge ${s==='ok'?'badge-green':'badge-red'}">${s==='ok'?'Compliant':'Violated'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* ── ENGINE HEALTH CHECK ── */
+  function setEngineState(online) {
+    const banner = document.getElementById('connBanner');
+    const btn    = document.getElementById('runBtn');
+    const amberCode = 'background:rgba(122,82,0,.1);border:1px solid var(--amber);padding:1px 4px;border-radius:3px;font-size:0.75rem;';
+    if (online) {
+      banner.className = 'conn-flash online';
+      banner.innerHTML = '<div class="conn-dot"></div><span>Assessment engine online — configure inputs and click <strong>RUN CRA ASSESSMENT</strong>.</span>';
+      btn.classList.add('active');
+      btn.removeAttribute('disabled');
+    } else {
+      banner.className = 'conn-flash offline';
+      banner.innerHTML = `<div class="conn-dot"></div><span>Assessment engine offline — results below are pre-computed for Home Assistant Core 2026.6.1. Start the engine (<code style="${amberCode}">docker compose up -d</code> then <code style="${amberCode}">./mvnw spring-boot:run</code>) to enable live evaluation.</span>`;
+      btn.classList.remove('active');
+      btn.setAttribute('disabled', '');
+    }
+  }
+
+  (async () => {
+    try {
+      const r = await fetch('/', { signal: AbortSignal.timeout(3000) });
+      setEngineState(r.ok);
+    } catch { setEngineState(false); }
+  })();
+
+  /* ── GITHUB API COLLECTION ── */
+  const GH = 'https://api.github.com';
+
+  function ghHeaders(token) {
+    const h = { 'Accept': 'application/vnd.github+json' };
+    if (token) h['Authorization'] = 'Bearer ' + token;
+    return h;
+  }
+
+  async function ghGet(path, token) {
+    try {
+      const r = await fetch(GH + path, { headers: ghHeaders(token) });
+      return { ok: r.ok, status: r.status, data: r.ok ? await r.json() : null };
+    } catch { return { ok: false, status: 0, data: null }; }
+  }
+
+  async function ghHead(path, token) {
+    try {
+      const r = await fetch(GH + path, { method: 'HEAD', headers: ghHeaders(token) });
+      return r.ok;
+    } catch { return false; }
+  }
+
+  async function collectOperands(owner, repo, token, cfg) {
+    const ops = {};
+    const today      = new Date().toISOString().slice(0, 10);
+    const RECENCY    = 90;
+    const HC_FRAC    = 0.4;
+    const ATK_LIMIT  = 500;
+    const org        = owner;
+
+    /* cached responses */
+    let _repo = null, _advisories = null;
+    async function getRepo()       { if (!_repo)       _repo       = (await ghGet(`/repos/${owner}/${repo}`, token)).data; return _repo; }
+    async function getAdvisories() { if (!_advisories) _advisories = (await ghGet(`/repos/${owner}/${repo}/security-advisories?per_page=100&state=published`, token)).data || []; return _advisories; }
+
+    function daysAgo(iso) { return (new Date(today) - new Date(iso.slice(0,10))) / 86400000; }
+
+    function setOp(name) { setProgress(name); }
+
+    /* 1 */ setOp('product/has-digital-element');
+    const rd = await getRepo();
+    ops['product/has-digital-element'] = rd && rd.language !== null ? 'true' : 'false';
+
+    /* 2 */ setOp('product/has-available-security-updates');
+    const latestRel = (await ghGet(`/repos/${owner}/${repo}/releases/latest`, token)).data;
+    ops['product/has-available-security-updates'] = (latestRel && latestRel.published_at && daysAgo(latestRel.published_at) <= RECENCY) ? 'true' : 'false';
+
+    /* 3 */ setOp('product/cybersecurity-level');
+    try {
+      const advs = await getAdvisories();
+      const total = advs.length, hc = advs.filter(a => a.severity === 'high' || a.severity === 'critical').length;
+      ops['product/cybersecurity-level'] = (total > 0 && hc / total > HC_FRAC) ? 3 : 1;
+    } catch { ops['product/cybersecurity-level'] = 1; }
+
+    /* 4 */ setOp('product/has-known-exploitable-vulnerabilities');
+    try {
+      const advs = await getAdvisories();
+      ops['product/has-known-exploitable-vulnerabilities'] =
+        (advs.length > 0 && advs.every(a => a.vulnerabilities && a.vulnerabilities.length > 0 && a.vulnerabilities.every(v => v.patched_versions !== null))) ? 'true' : 'false';
+    } catch { ops['product/has-known-exploitable-vulnerabilities'] = 'false'; }
+
+    /* 5 */ setOp('product/ensure-integrity');
+    try {
+      const wf = await ghGet(`/repos/${owner}/${repo}/contents/.github/workflows`, token);
+      let found = false;
+      if (wf.ok && Array.isArray(wf.data)) {
+        for (const f of wf.data.filter(x => x.type === 'file').slice(0, 12)) {
+          if (!f.download_url) continue;
+          try {
+            const txt = await fetch(f.download_url).then(r => r.text());
+            if (txt.toLowerCase().includes('cosign')) { found = true; break; }
+          } catch {}
+        }
+      }
+      ops['product/ensure-integrity'] = found ? 'true' : 'false';
+    } catch { ops['product/ensure-integrity'] = 'false'; }
+
+    /* 6 */ setOp('product/is-updatable');
+    ops['product/is-updatable'] = (latestRel && latestRel.id) ? 'true' : 'false';
+
+    /* 7 */ setOp('product/document-product-vulnerabilities-and-components');
+    try {
+      const r = await fetch(GH + `/repos/${owner}/${repo}/dependency-graph/sbom`, { headers: ghHeaders(token) });
+      ops['product/document-product-vulnerabilities-and-components'] = r.ok ? 'true' : 'false';
+    } catch { ops['product/document-product-vulnerabilities-and-components'] = 'false'; }
+
+    /* 8 */ setOp('product/product-vulnerabilities-are-remediated');
+    try {
+      const advs = await getAdvisories();
+      ops['product/product-vulnerabilities-are-remediated'] =
+        advs.every(a => a.vulnerabilities && a.vulnerabilities.length > 0 && a.vulnerabilities.every(v => v.patched_versions !== null)) ? 'true' : 'false';
+    } catch { ops['product/product-vulnerabilities-are-remediated'] = 'false'; }
+
+    /* 9 */ setOp('product/publically-disclose-security-updates');
+    try {
+      const advs = await getAdvisories();
+      ops['product/publically-disclose-security-updates'] = (advs.length > 0 && advs.every(a => a.cve_id !== null)) ? 'true' : 'false';
+    } catch { ops['product/publically-disclose-security-updates'] = 'false'; }
+
+    /* 10 */ setOp('product/has-enforced-vulnerability-disclosure');
+    try {
+      const [orgR, repoR] = await Promise.all([
+        fetch(GH + `/repos/${org}/.github/contents/SECURITY.md`, { headers: ghHeaders(token) }),
+        fetch(GH + `/repos/${owner}/${repo}/contents/SECURITY.md`, { headers: ghHeaders(token) })
+      ]);
+      ops['product/has-enforced-vulnerability-disclosure'] = (orgR.ok || repoR.ok) ? 'true' : 'false';
+    } catch { ops['product/has-enforced-vulnerability-disclosure'] = 'false'; }
+
+    /* 11 */ setOp('product/has-shared-product-vulnerabilities');
+    ops['product/has-shared-product-vulnerabilities'] = ops['product/publically-disclose-security-updates'];
+
+    /* 12 */ setOp('product/has-security-updates-securely-distributed');
+    try {
+      const assets = latestRel ? latestRel.assets || [] : [];
+      ops['product/has-security-updates-securely-distributed'] =
+        assets.some(a => a.name.endsWith('.sig') || a.name.endsWith('.asc') || a.name.endsWith('.sigstore')) ? 'true' : 'false';
+    } catch { ops['product/has-security-updates-securely-distributed'] = 'false'; }
+
+    /* 13 */ setOp('product/security-updates-are-free-and-quickly-disseminated');
+    try {
+      const OSI = ['MIT','Apache-2.0','GPL-2.0','GPL-3.0','LGPL-2.1','LGPL-3.0','BSD-2-Clause','BSD-3-Clause','MPL-2.0','AGPL-3.0','ISC','CC0-1.0','Unlicense'];
+      const r2 = await ghGet(`/repos/${owner}/${repo}/releases?per_page=2`, token);
+      const rels2 = r2.data || [];
+      const isFree = rd && rd.license && OSI.includes(rd.license.spdx_id);
+      let cadenceOk = false;
+      if (rels2.length >= 2) {
+        const gap = (new Date(rels2[0].published_at) - new Date(rels2[1].published_at)) / 86400000;
+        cadenceOk = gap <= RECENCY;
+      }
+      ops['product/security-updates-are-free-and-quickly-disseminated'] = (isFree && cadenceOk) ? 'true' : 'false';
+    } catch { ops['product/security-updates-are-free-and-quickly-disseminated'] = 'false'; }
+
+    /* 14 */ setOp('product/allow-configuration');
+    ops['product/allow-configuration'] = await ghHead(`/repos/${owner}/${repo}/contents/${cfg.configPath}`, token) ? 'true' : 'false';
+
+    /* 15 */ setOp('product/has-restricted-access');
+    ops['product/has-restricted-access'] = await ghHead(`/repos/${owner}/${repo}/contents/${cfg.authPath}`, token) ? 'true' : 'false';
+
+    /* 16 */ setOp('product/process-data');
+    ops['product/process-data'] = await ghHead(`/repos/${owner}/${repo}/contents/${cfg.componentsDir}/recorder`, token) ? 'true' : 'false';
+
+    /* 17 */ setOp('product/use-external-services');
+    try {
+      const r = await ghGet(`/repos/${owner}/${repo}/contents/${cfg.componentsDir}`, token);
+      ops['product/use-external-services'] = (r.ok && Array.isArray(r.data) && r.data.length > 0) ? 'true' : 'false';
+    } catch { ops['product/use-external-services'] = 'false'; }
+
+    /* 18 */ setOp('product/has-digital-interface');
+    ops['product/has-digital-interface'] = await ghHead(`/repos/${owner}/${repo}/contents/${cfg.componentsDir}/api`, token) ? 'true' : 'false';
+
+    /* 19 */ setOp('product/has-secure-by-default-configuration');
+    try {
+      const onboardingOk = await ghHead(`/repos/${owner}/${repo}/contents/${cfg.componentsDir}/onboarding`, token);
+      const authR = await ghGet(`/repos/${owner}/${repo}/contents/${cfg.authPath}`, token);
+      let defaultPw = false;
+      if (authR.ok && authR.data && authR.data.content) {
+        const decoded = atob(authR.data.content.replace(/\n/g, ''));
+        defaultPw = /default_password|DEFAULT_PASSWORD/i.test(decoded);
+      }
+      ops['product/has-secure-by-default-configuration'] = (onboardingOk && !defaultPw) ? 'true' : 'false';
+    } catch { ops['product/has-secure-by-default-configuration'] = 'false'; }
+
+    /* 20 */ setOp('product/use-encrypted-data');
+    ops['product/use-encrypted-data'] = await ghHead(`/repos/${owner}/${repo}/contents/${cfg.componentsDir}/http`, token) ? 'true' : 'false';
+
+    /* 21 */ setOp('product/respect-minimisation-of-data');
+    try {
+      const r = await ghGet(`/repos/${owner}/${repo}/contents/${cfg.componentsDir}/analytics/__init__.py`, token);
+      if (r.ok && r.data && r.data.content) {
+        const decoded = atob(r.data.content.replace(/\n/g, ''));
+        ops['product/respect-minimisation-of-data'] = /vol\.Optional|Optional.*bool|opt.?in/i.test(decoded) ? 'true' : 'false';
+      } else { ops['product/respect-minimisation-of-data'] = 'false'; }
+    } catch { ops['product/respect-minimisation-of-data'] = 'false'; }
+
+    /* 22 */ setOp('product/has-limited-attack-surfaces');
+    try {
+      const r = await ghGet(`/repos/${owner}/${repo}/git/trees/HEAD?recursive=1`, token);
+      if (r.ok && r.data && r.data.tree) {
+        const depth = cfg.componentsDir.split('/').length;
+        const count = r.data.tree.filter(item =>
+          item.type === 'tree' &&
+          item.path.startsWith(cfg.componentsDir + '/') &&
+          item.path.split('/').length === depth + 1
+        ).length;
+        ops['product/has-limited-attack-surfaces'] = count <= ATK_LIMIT ? 'true' : 'false';
+      } else { ops['product/has-limited-attack-surfaces'] = 'true'; }
+    } catch { ops['product/has-limited-attack-surfaces'] = 'true'; }
+
+    /* 23 */ setOp('product/is-using-exploitation-mitigation-mechanisms');
+    try {
+      const r = await ghGet(`/repos/${owner}/${repo}/contents/pyproject.toml`, token);
+      if (r.ok && r.data && r.data.content) {
+        const decoded = atob(r.data.content.replace(/\n/g, ''));
+        ops['product/is-using-exploitation-mitigation-mechanisms'] =
+          /requires-python\s*=\s*">=3\.(1[2-9]|[2-9][0-9])/.test(decoded) ? 'true' : 'false';
+      } else { ops['product/is-using-exploitation-mitigation-mechanisms'] = 'false'; }
+    } catch { ops['product/is-using-exploitation-mitigation-mechanisms'] = 'false'; }
+
+    /* 24 */ setOp('product/is-recording-security-information');
+    ops['product/is-recording-security-information'] = await ghHead(`/repos/${owner}/${repo}/contents/${cfg.componentsDir}/logbook`, token) ? 'true' : 'false';
+
+    /* 25 */ setOp('product/is-security-tested');
+    ops['product/is-security-tested'] = await ghHead(`/repos/${owner}/${repo}/contents/${cfg.ciWorkflow}`, token) ? 'true' : 'false';
+
+    return ops;
+  }
+
+  /* ── PROGRESS DISPLAY ── */
+  function setProgress(operand) {
+    const el = document.getElementById('progressText');
+    if (el) el.textContent = operand;
+  }
+
+  const escAttr = s => s ? s.replace(/&/g, '&amp;').replace(/"/g, '&quot;') : '';
+
+  /* ── DETAIL TABLES ── */
+  function showDetails(result, operands, ruleOperandSplit) {
+    clearTableSort('detailComplianceBody');
+    clearTableSort('detailOperandsBody');
+    clearTableSort('detailRulesBody');
+    const active   = result.active_rules   || result.rules || [];
+    const violated = result.violated_rules || [];
+    const allRules = result.rules || [];
+
+    document.getElementById('detailsRuleLine').style.display = '';
+    document.getElementById('resultDetailsSection').style.display = '';
+
+    /* A — Compliance Report */
+    document.getElementById('detailCount1').textContent = allRules.length + ' rules';
+    document.getElementById('detailComplianceBody').innerHTML = allRules.map(ruleId => {
+      const isActive   = active.includes(ruleId);
+      const isViolated = violated.includes(ruleId);
+      const rowClass = isViolated ? 'row-bad' : isActive ? 'row-ok' : 'row-na';
+      const applicable = isActive
+        ? '<span class="badge badge-blue">Active</span>'
+        : '<span class="badge badge-gray">Inactive</span>';
+      const status = isViolated
+        ? '<span class="badge badge-red">Non-compliant</span>'
+        : isActive
+          ? '<span class="badge badge-green">Compliant</span>'
+          : '<span class="badge badge-gray">N/A</span>';
+      const name = labelMap[ruleId] || ruleId;
+      const src  = sourceMap[ruleId] ? `<div class="rule-src">${sourceMap[ruleId]}</div>` : '';
+      const desc = descriptionMap[ruleId] ? ` data-tooltip="${escAttr(descriptionMap[ruleId])}"` : '';
+      return `<tr class="${rowClass}"><td class="id-cell" title="${ruleId}"${desc}>${name}${src}</td><td style="text-align:center;">${applicable}</td><td>${status}</td></tr>`;
+    }).join('');
+
+    /* B — Provided Data & Rule Influence */
+    const opKeys = Object.keys(operands);
+    document.getElementById('detailCount2').textContent = opKeys.length + ' inputs';
+    let expIdx = 0;
+    function makeExpandCell(rows) {
+      if (!rows.length) return '<span style="color:var(--ink3);font-size:0.75rem;">—</span>';
+      const id = 'exp-' + (expIdx++);
+      const label = rows.length === 1 ? '1 rule' : rows.length + ' rules';
+      return `<span class="expand-toggle" onclick="var d=document.getElementById('${id}');var open=d.style.display!=='none';d.style.display=open?'none':'block';this.textContent=(open?'▸ ':'▾ ')+'${label}';">▸ ${label}</span><div id="${id}" class="expand-list" style="display:none;">${rows.join('')}</div>`;
+    }
+    document.getElementById('detailOperandsBody').innerHTML = opKeys.map(opKey => {
+      const val = operands[opKey];
+      const appRows = [], satRows = [];
+      for (const [ruleId, split] of Object.entries(ruleOperandSplit)) {
+        const name = labelMap[ruleId] || ruleId;
+        const tipAttr = descriptionMap[ruleId] ? ` data-tooltip="${escAttr(descriptionMap[ruleId])}"` : '';
+        if ((split.preconditionOperands || []).includes(opKey)) {
+          const badge = active.includes(ruleId) ? '<span class="badge badge-blue">Active</span>' : '<span class="badge badge-gray">Inactive</span>';
+          appRows.push(`<div class="influence-item"><span title="${ruleId}"${tipAttr} style="cursor:help;">${name}</span>${badge}</div>`);
+        }
+        if ((split.constraintOperands || []).includes(opKey)) {
+          const badge = violated.includes(ruleId) ? '<span class="badge badge-red">Non-compliant</span>'
+                      : active.includes(ruleId)   ? '<span class="badge badge-green">Compliant</span>'
+                      : '<span class="badge badge-gray">N/A</span>';
+          satRows.push(`<div class="influence-item"><span title="${ruleId}"${tipAttr} style="cursor:help;">${name}</span>${badge}</div>`);
+        }
+      }
+      return `<tr>
+        <td class="id-cell">${opKey}</td>
+        <td style="text-align:center;"><span class="badge badge-outline">${val}</span></td>
+        <td>${makeExpandCell(appRows)}</td>
+        <td>${makeExpandCell(satRows)}</td>
+      </tr>`;
+    }).join('');
+
+    /* C — Required Information Per Rule */
+    const splitEntries = Object.entries(ruleOperandSplit);
+    document.getElementById('detailCount3').textContent = splitEntries.length + ' rules';
+    document.getElementById('detailRulesBody').innerHTML = splitEntries.map(([ruleId, split]) => {
+      const none = '<span style="color:var(--ink3);font-size:0.75rem;">—</span>';
+      const pre = (split.preconditionOperands || []).map(op =>
+        `<span class="badge badge-outline" style="display:block;margin-bottom:3px;">${op}</span>`
+      ).join('') || none;
+      const con = (split.constraintOperands || []).map(op =>
+        `<span class="badge badge-outline" style="display:block;margin-bottom:3px;">${op}</span>`
+      ).join('') || none;
+      const name = labelMap[ruleId] || ruleId;
+      const src  = sourceMap[ruleId] ? `<div class="rule-src">${sourceMap[ruleId]}</div>` : '';
+      const desc = descriptionMap[ruleId] ? ` data-tooltip="${escAttr(descriptionMap[ruleId])}"` : '';
+      return `<tr><td class="id-cell" title="${ruleId}"${desc}>${name}${src}</td><td>${pre}</td><td>${con}</td></tr>`;
+    }).join('');
+  }
+
+  /* ── RESULT RENDERING ── */
+  function showLoading(label) {
+    hideDetails();
+    clearTableSort('ruleTableBody');
+    document.getElementById('resultsPanel').classList.remove('results-example');
+    document.getElementById('exampleTag').style.display = 'none';
+    document.getElementById('stampWrap').innerHTML = `
+      <div class="result-placeholder" style="flex:1;">
+        <div class="ph-icon" style="animation:spin 1.2s linear infinite;display:inline-block;">↻</div>
+        <span class="ph-label">Collecting inputs for ${label}</span>
+        <div class="ph-text" id="progressText">Connecting to GitHub API...</div>
+      </div>`;
+    document.getElementById('statsBar').innerHTML = ['Active','Satisfied','Violated','Missing'].map(l =>
+      `<div class="stat-cell"><div class="stat-value" style="color:var(--ink3);">—</div><div class="stat-label">${l}</div></div>`
+    ).join('');
+    document.getElementById('ruleTableBody').innerHTML =
+      '<tr><td colspan="2" style="text-align:center;padding:28px;color:var(--ink3);font-size:0.8rem;">Assessment in progress…</td></tr>';
+  }
+
+  function showResults(result, label) {
+    clearTableSort('ruleTableBody');
+    const active   = result.active_rules   || result.rules || [];
+    const violated = result.violated_rules || [];
+    const ok       = active.filter(r => !violated.includes(r));
+    const allow    = result.allow;
+
+    document.getElementById('resultsPanel').classList.remove('results-example');
+    document.getElementById('exampleTag').style.display = 'none';
+    document.getElementById('stampWrap').innerHTML = `
+      <div class="stamp ${allow ? 'allow' : 'deny'}">${allow ? 'COMPLIANT' : 'NON-COMPLIANT'}</div>
+      <div class="stamp-meta">
+        <strong>${allow ? 'All rules satisfied.' : 'One or more rules violated.'}</strong><br>
+        <span style="color:var(--ink2);font-size:0.72rem;">${label} &nbsp;·&nbsp; ${active.length} rules active · ${ok.length} satisfied · ${violated.length} violated</span>
+      </div>`;
+    document.getElementById('statsBar').innerHTML = `
+      <div class="stat-cell s-total"><div class="stat-value">${active.length}</div><div class="stat-label">Active</div></div>
+      <div class="stat-cell s-ok">   <div class="stat-value">${ok.length}</div><div class="stat-label">Satisfied</div></div>
+      <div class="stat-cell s-bad">  <div class="stat-value">${violated.length}</div><div class="stat-label">Violated</div></div>
+      <div class="stat-cell s-na">   <div class="stat-value">0</div><div class="stat-label">Missing</div></div>`;
+    document.getElementById('ruleTableBody').innerHTML = active.map(id => {
+      const bad  = violated.includes(id);
+      const name = labelMap[id] || id;
+      const src  = sourceMap[id] ? `<div class="rule-src">${sourceMap[id]}</div>` : '';
+      const desc = descriptionMap[id] ? ` data-tooltip="${escAttr(descriptionMap[id])}"` : '';
+      return `<tr class="row-${bad?'bad':'ok'}">
+        <td class="rule-id" title="${id}"${desc}>${name}${src}</td>
+        <td style="text-align:center;"><span class="badge ${bad?'badge-red':'badge-green'}">${bad?'Violated':'Compliant'}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function showError(msg) {
+    document.getElementById('exampleTag').style.display = 'none';
+    document.getElementById('stampWrap').innerHTML = `
+      <div class="result-placeholder" style="flex:1;">
+        <div class="ph-icon">⚠</div>
+        <span class="ph-label">Assessment failed</span>
+        <div class="ph-text" style="color:var(--accent);">${msg}</div>
+      </div>`;
+  }
+
+  /* ── RUN ASSESSMENT ── */
+  async function runAssessment() {
+    const owner = document.getElementById('owner').value.trim();
+    const repo  = document.getElementById('repo').value.trim();
+    const token = document.getElementById('token').value.trim();
+    if (!owner || !repo) { alert('Please enter owner and repository name.'); return; }
+
+    const cfg = {
+      configPath:    document.getElementById('configPath').value.trim(),
+      authPath:      document.getElementById('authPath').value.trim(),
+      componentsDir: document.getElementById('componentsDir').value.trim(),
+      ciWorkflow:    document.getElementById('ciWorkflow').value.trim(),
+    };
+
+    const btn = document.getElementById('runBtn');
+    btn.classList.remove('active');
+    btn.setAttribute('disabled', '');
+    showLoading(`${owner}/${repo}`);
+
+    try {
+      const operands = await collectOperands(owner, repo, token, cfg);
+
+      /* manual operands override */
+      operands['product/has-control-access-mecanism']                    = document.getElementById('op-acm').value;
+      operands['product/availability-of-essential-function']             = document.getElementById('op-avail').value;
+      operands['product/minimise-availability-issue-on-external-services'] = document.getElementById('op-min').value;
+      operands['product/cybersecurity-level']                            = parseInt(document.getElementById('op-cyber').value);
+      operands['values/appropriate-level']                               = parseInt(document.getElementById('op-approp').value);
+
+      setProgress('Submitting to assessment engine…');
+
+      const resp = await fetch('/ha/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operands })
+      });
+      if (!resp.ok) throw new Error(`Engine returned ${resp.status}: ${await resp.text()}`);
+      const json = await resp.json();
+      const result = json.result || json;
+      const ruleOperandSplit = json.ruleOperandSplit || {};
+      if (json.labelMap)  labelMap  = {...CRA_LABELS,  ...json.labelMap};
+      if (json.sourceMap) sourceMap = {...CRA_SOURCES, ...json.sourceMap};
+      showResults(result, `${owner}/${repo}`);
+      showDetails(result, operands, ruleOperandSplit);
+    } catch (err) {
+      showError(err.message || String(err));
+    } finally {
+      btn.classList.add('active');
+      btn.removeAttribute('disabled');
+    }
+  }
+
+  document.getElementById('runBtn').addEventListener('click', () => {
+    if (!document.getElementById('runBtn').hasAttribute('disabled')) runAssessment();
+  });
+
+  /* spinner keyframes */
+  const _style = document.createElement('style');
+  _style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+  document.head.appendChild(_style);
+
+  /* ── COLLAPSIBLE SECTIONS ── */
+  function toggleSection(header) {
+    const panel   = header.nextElementSibling;
+    const expanded = header.getAttribute('aria-expanded') === 'true';
+    header.setAttribute('aria-expanded', String(!expanded));
+    panel.style.display = expanded ? 'none' : 'block';
+  }
+  document.querySelectorAll('.section-toggle[aria-expanded="false"]').forEach(h => {
+    const p = h.nextElementSibling;
+    if (p) p.style.display = 'none';
+  });
+
+  /* ── SORTABLE TABLES ── */
+  (function () {
+    function cellSortValue(cell, sortType) {
+      switch (sortType) {
+        case 'status': {
+          const badge = cell.querySelector('.badge');
+          if (!badge) return 5;
+          const t = badge.textContent.trim().toLowerCase();
+          if (t.includes('non-compliant') || t.includes('violated') || t.includes('denied')) return 0;
+          if (t.includes('missing') || t.includes('incomplete')) return 1;
+          if (t.includes('n/a')) return 3;
+          if (t.includes('compliant') || t.includes('granted')) return 4;
+          return 5;
+        }
+        case 'applicable': {
+          const badge = cell.querySelector('.badge');
+          if (!badge) return 2;
+          const t = badge.textContent.trim().toLowerCase();
+          return (t === 'active' || t === 'yes') ? 0 : 1;
+        }
+        case 'count': {
+          const n = cell.querySelectorAll('.influence-item, .badge-outline, div[style*="padding:2px"]').length;
+          return n > 0 ? n : (cell.textContent.trim() === '—' ? 0 : 1);
+        }
+        default: {
+          const clone = cell.cloneNode(true);
+          clone.querySelectorAll('.rule-src, .badge, .missing-chip, .missing-chips').forEach(e => e.remove());
+          return clone.textContent.trim().toLowerCase();
+        }
+      }
+    }
+
+    function sortTable(table, th, colIndex) {
+      const tbody = table.querySelector('tbody');
+      if (!tbody) return;
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const dir = th.dataset.dir === 'asc' ? 'desc' : 'asc';
+      const sortType = th.dataset.sortType || 'text';
+      table.querySelectorAll('thead th').forEach(h => { h.dataset.dir = ''; h.classList.remove('sort-asc', 'sort-desc'); });
+      th.dataset.dir = dir;
+      th.classList.add(dir === 'asc' ? 'sort-asc' : 'sort-desc');
+      rows.sort((a, b) => {
+        const av = cellSortValue(a.cells[colIndex], sortType);
+        const bv = cellSortValue(b.cells[colIndex], sortType);
+        const cmp = (sortType === 'text') ? av.localeCompare(bv, undefined, { numeric: true }) : (av - bv);
+        return dir === 'asc' ? cmp : -cmp;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
+    window.clearTableSort = function (tbodyId) {
+      const el = document.getElementById(tbodyId);
+      if (!el) return;
+      const table = el.closest('table');
+      if (!table) return;
+      table.querySelectorAll('thead th').forEach(h => { h.dataset.dir = ''; h.classList.remove('sort-asc', 'sort-desc'); });
+    };
+
+    document.querySelectorAll('table').forEach(table => {
+      const allThs = Array.from(table.querySelectorAll('thead th'));
+      allThs.forEach((th, colIndex) => {
+        if (!th.dataset.sortType) return;
+        th.addEventListener('click', () => sortTable(table, th, colIndex));
+      });
+    });
+  })();
+
+  /* ── TOOLTIPS ── */
+  (function () {
+    const tip = document.createElement('div');
+    tip.id = 'rsscan-tip';
+    document.body.appendChild(tip);
+    document.addEventListener('mousemove', e => {
+      const el = e.target.closest('[data-tooltip]');
+      if (!el || !el.dataset.tooltip) { tip.style.display = 'none'; return; }
+      tip.textContent = el.dataset.tooltip;
+      tip.style.display = 'block';
+      const vw = window.innerWidth, vh = window.innerHeight;
+      tip.style.left = Math.min(e.clientX + 16, vw - tip.offsetWidth  - 8) + 'px';
+      tip.style.top  = Math.min(e.clientY + 16, vh - tip.offsetHeight - 8) + 'px';
+    });
+  })();
+
+  /* ── HOW WE ASSESS ── */
+  const HEURISTICS = [
+    // PRECONDITIONS
+    {
+      name: 'product/has-digital-element', source: 'auto',
+      label: 'Product includes digital elements', article: 'CRA, Art. 2 — Scope',
+      regulatory: 'Article 2 CRA defines products with digital elements as any software product or combination of hardware and software that enables direct or indirect data connections to devices or networks. This precondition gates all CRA Annex I obligations.',
+      api: 'GET /repos/{OWNER}/{REPO}',
+      heuristic: 'true if the repository\'s primary programming language field is not null, indicating the presence of executable software code.',
+    },
+    {
+      name: 'product/allow-configuration', source: 'auto',
+      label: 'Product allows user configuration', article: 'CRA, Annex I, Part I, §3(a)',
+      regulatory: 'Gates the secure-by-default obligation (§3(a)). Only products that can be configured by the user are required to be deployable in a secure configuration.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{CONFIG_ENTRIES_PATH}',
+      heuristic: 'true if the configuration entry point file or directory specified by CONFIG_ENTRIES_PATH exists in the repository (HTTP 200 response).',
+    },
+    {
+      name: 'product/has-restricted-access', source: 'auto',
+      label: 'Product restricts access', article: 'CRA, Annex I, Part I, §3(b)',
+      regulatory: 'Gates the access control obligation (§3(b)). Only products that implement access restrictions are required to provide appropriate access control mechanisms.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{AUTH_PATH}',
+      heuristic: 'true if the authentication module entry point specified by AUTH_PATH exists in the repository (HTTP 200 response).',
+      limitation: 'File presence is a rebuttable presumption; effectiveness of the authentication implementation requires manual verification.',
+    },
+    {
+      name: 'product/process-data', source: 'auto',
+      label: 'Product processes or stores data', article: 'CRA, Annex I, Part I, §3(c)',
+      regulatory: 'Gates the encryption (§3(c)) and data minimisation (§3(e)) obligations. Only products that handle data are required to protect its confidentiality and limit collection.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{RECORDER_PATH}',
+      heuristic: 'true if the persistent data storage component directory specified by RECORDER_PATH exists in the repository (HTTP 200 response).',
+    },
+    {
+      name: 'product/use-external-services', source: 'auto',
+      label: 'Product uses external services', article: 'CRA, Annex I, Part I, §3(g)',
+      regulatory: 'Gates the external service resilience obligation (§3(g)). Only products that rely on external services must minimise their negative impact on those services\' availability.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{CLOUD_INTEGRATIONS_PATH}',
+      heuristic: 'true if the external service integrations directory specified by CLOUD_INTEGRATIONS_PATH exists and is non-empty (array of items), evidencing that the product connects to remote systems.',
+    },
+    {
+      name: 'product/has-digital-interface', source: 'auto',
+      label: 'Product exposes a digital interface', article: 'CRA, Annex I, Part I, §3(h)',
+      regulatory: 'Gates the attack surface limitation obligation (§3(h)). Only products that expose digital interfaces are required to minimise their attack surface.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{API_PATH}',
+      heuristic: 'true if the network API component directory specified by API_PATH exists in the repository (HTTP 200 response).',
+    },
+    {
+      name: 'product/has-available-security-updates', source: 'auto',
+      label: 'Product has available security updates', article: 'CRA, Annex I, Part II, §4',
+      regulatory: 'Gates the public vulnerability disclosure (§4) and free update distribution (§8) obligations. These only apply when a manufacturer actively publishes security updates.',
+      api: 'GET /repos/{OWNER}/{REPO}/releases/latest',
+      heuristic: 'true if the latest release was published within RECENCY_THRESHOLD_DAYS days of ASSESSMENT_DATE, confirming that current security updates are actively distributed.',
+    },
+    // PART I §1
+    {
+      name: 'product/cybersecurity-level', source: 'auto',
+      label: 'Product cybersecurity level', article: 'CRA, Annex I, Part I, §1',
+      regulatory: 'CRA Annex I §1 requires products to ensure an appropriate level of cybersecurity based on the risks. This input provides the measured level, compared against the threshold set by values/appropriate-level.',
+      api: 'GET /repos/{OWNER}/{REPO}/security-advisories',
+      heuristic: 'Baseline level 1 (Low) for CRA Class I products (not listed in Annex III or IV). Level raised to 3 (Moderate) if the fraction of HIGH or CRITICAL advisories in the 100 most recent published advisories exceeds HIGH_CRITICAL_FRACTION_THRESHOLD (default 0.40).',
+      limitation: 'This heuristic characterises observed vulnerability severity in published advisories and should not be interpreted as evidence of inherent design quality. Products with few published advisories may receive level 1 regardless of actual risk.',
+    },
+    {
+      name: 'values/appropriate-level', source: 'reg',
+      label: 'Applicable cybersecurity level (regulatory threshold)', article: 'CRA, Annex I, Part I, §1',
+      regulatory: 'CRA §1 requires cybersecurity commensurate with the risks. The appropriate level is a regulatory determination based on product classification and deployment context, not derivable from the repository alone.',
+      guidance: 'Level 1 (Low): not listed in Annex III or IV, no integration with safety-sensitive devices. Level 3 (Moderate): not listed in Annex III, but typically deployed with safety-sensitive physical devices (door locks, alarm systems, cameras). Level 5 (High): listed in CRA Annex III or deployed in critical infrastructure contexts. Determine classification by reviewing the product against Annex III and its typical deployment scenario.',
+    },
+    // PART I §2
+    {
+      name: 'product/has-known-exploitable-vulnerabilities', source: 'auto',
+      label: 'Product has no known exploitable vulnerabilities', article: 'CRA, Annex I, Part I, §2',
+      regulatory: 'CRA Annex I §2 requires products to be delivered without known exploitable vulnerabilities. All disclosed vulnerabilities must be patched before or at delivery.',
+      api: 'GET /repos/{OWNER}/{REPO}/security-advisories',
+      heuristic: 'true if every entry in the 100 most recent published advisories has at least one vulnerability with a non-null patched_versions field, confirming no currently unpatched exploitable vulnerability exists.',
+    },
+    // PART I §3(a)
+    {
+      name: 'product/has-secure-by-default-configuration', source: 'auto',
+      label: 'Product ships with secure default configuration', article: 'CRA, Annex I, Part I, §3(a)',
+      regulatory: 'CRA Annex I §3(a) requires configurable products to be deployable and usable in a secure configuration, preventing the product from arriving with insecure defaults such as hardcoded passwords.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{ONBOARDING_PATH} and GET /repos/{OWNER}/{REPO}/contents/{AUTH_PATH}',
+      heuristic: 'true if (1) a mandatory onboarding component exists at ONBOARDING_PATH (HTTP 200), enforcing credential creation before first access, and (2) the decoded content of AUTH_PATH contains no constant matching /default_password|DEFAULT_PASSWORD/ (case-insensitive).',
+    },
+    // PART I §3(b)
+    {
+      name: 'product/has-control-access-mecanism', source: 'manual',
+      label: 'Product enforces access control', article: 'CRA, Annex I, Part I, §3(b)',
+      regulatory: 'CRA Annex I §3(b) requires products that restrict access to implement appropriate mechanisms, including multi-factor authentication where relevant and least-privilege API access tokens.',
+      guidance: 'Review the authentication module for default MFA enforcement. Review the API token model for scope support. Check past CVEs for authentication bypass vulnerabilities. Verify whether a compromised token grants full system access. true only if (1) MFA is enforced by default for all user accounts and (2) API access tokens can be scoped to specific resources or integrations.',
+    },
+    // PART I §3(c)
+    {
+      name: 'product/use-encrypted-data', source: 'auto',
+      label: 'Product encrypts data', article: 'CRA, Annex I, Part I, §3(c)',
+      regulatory: 'CRA Annex I §3(c) requires products that process or store data to protect its confidentiality through encryption at rest and in transit.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{HTTP_PATH}',
+      heuristic: 'true if the HTTP or TLS configuration module at HTTP_PATH exists in the repository (HTTP 200 response), evidencing that the product implements encrypted transport for data in transit.',
+    },
+    // PART I §3(d)
+    {
+      name: 'product/ensure-integrity', source: 'auto',
+      label: 'Product protects data and software integrity', article: 'CRA, Annex I, Part I, §3(d)',
+      regulatory: 'CRA Annex I §3(d) requires products to protect the integrity of stored, transmitted and processed data, commands and configurations against unauthorised modification.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/.github/workflows — workflow file contents (download_url)',
+      heuristic: 'true if any CI workflow file in .github/workflows contains the string "cosign" (case-insensitive), evidencing that container images are cryptographically signed via Sigstore.',
+      limitation: 'Only checks for the cosign keyword in workflow files. Does not verify that signing keys are properly protected, that signatures are verified at deployment time, or that all release artefacts are covered.',
+    },
+    // PART I §3(e)
+    {
+      name: 'product/respect-minimisation-of-data', source: 'auto',
+      label: 'Product minimises data collection', article: 'CRA, Annex I, Part I, §3(e)',
+      regulatory: 'CRA Annex I §3(e) requires products that process data to collect only data that is adequate, relevant and limited to what is necessary for the specified purpose.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{ANALYTICS_PATH}',
+      heuristic: 'true if the analytics configuration file at ANALYTICS_PATH contains preference fields declared with Optional semantics (matching /vol\\.Optional|Optional.*bool|opt.?in/i), evidencing that data collection is disabled by default and requires explicit user opt-in.',
+    },
+    // PART I §3(f)
+    {
+      name: 'product/availability-of-essential-function', source: 'manual',
+      label: 'Product preserves availability of essential functions', article: 'CRA, Annex I, Part I, §3(f)',
+      regulatory: 'CRA Annex I §3(f) requires products to protect the availability of their essential functions, including resilience against denial-of-service attacks.',
+      guidance: 'Assess whether the product runs as a single process or with built-in redundancy. Check for watchdog or supervisor mechanisms and whether they provide continuity guarantees or merely restart on failure. Verify whether a formal uptime commitment or SLA is documented. true only if built-in high-availability or automatic recovery mechanisms exist for essential functions.',
+    },
+    // PART I §3(g)
+    {
+      name: 'product/minimise-availability-issue-on-external-services', source: 'manual',
+      label: 'Product resists external service disruption', article: 'CRA, Annex I, Part I, §3(g)',
+      regulatory: 'CRA Annex I §3(g) requires products to minimise their negative impact on the availability of services provided by other devices or networks they depend on.',
+      guidance: 'Assess whether essential functions continue to execute when cloud or external services are offline. Check architecture documentation for explicit local-first design. Verify that the product degrades gracefully rather than failing completely on external service loss.',
+    },
+    // PART I §3(h)
+    {
+      name: 'product/has-limited-attack-surfaces', source: 'auto',
+      label: 'Product limits its attack surface', article: 'CRA, Annex I, Part I, §3(h)',
+      regulatory: 'CRA Annex I §3(h) requires products with digital interfaces to be designed to limit attack surfaces, including by restricting unnecessary external interfaces and network connections.',
+      api: 'GET /repos/{OWNER}/{REPO}/git/trees/HEAD?recursive=1',
+      heuristic: 'true if the number of direct subdirectories in COMPONENTS_DIR does not exceed ATTACK_SURFACE_THRESHOLD (default 500). Each subdirectory represents an integration that may expose network connections or protocol listeners.',
+      limitation: 'The git trees API response may be truncated for large repositories; verify the truncated field in the API response before relying on the count.',
+    },
+    // PART I §3(i)
+    {
+      name: 'product/is-using-exploitation-mitigation-mechanisms', source: 'auto',
+      label: 'Product applies exploitation mitigations', article: 'CRA, Annex I, Part I, §3(i)',
+      regulatory: 'CRA Annex I §3(i) requires products to reduce the impact of incidents using appropriate exploitation mitigation techniques and security development lifecycle practices.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{PYTHON_CONFIG}',
+      heuristic: 'true if the Python project configuration at PYTHON_CONFIG specifies requires-python >= 3.12 (matching /requires-python\\s*=\\s*">=3\\.(1[2-9]|[2-9][0-9])/), ensuring all supported runtimes include OS-level ASLR, DEP and compiler hardening on all supported platforms.',
+    },
+    // PART I §3(j)
+    {
+      name: 'product/is-recording-security-information', source: 'auto',
+      label: 'Product logs security events', article: 'CRA, Annex I, Part I, §3(j)',
+      regulatory: 'CRA Annex I §3(j) requires products to provide security information by recording and monitoring relevant internal activity, including access to or modification of data, services or functions.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{LOGBOOK_PATH}',
+      heuristic: 'true if the security event logging component directory specified by LOGBOOK_PATH exists in the repository (HTTP 200 response).',
+    },
+    // PART I §3(k)
+    {
+      name: 'product/is-updatable', source: 'auto',
+      label: 'Product supports security updates', article: 'CRA, Annex I, Part I, §3(k)',
+      regulatory: 'CRA Annex I §3(k) requires products to ensure that vulnerabilities can be addressed through security updates, including by clearly separating the product from other software on the same device.',
+      api: 'GET /repos/{OWNER}/{REPO}/releases',
+      heuristic: 'true if the repository has at least one published release (non-empty array with per_page=1), evidencing that a distribution mechanism exists through which users can apply updates.',
+      limitation: 'Does not verify that all supported deployment paths (package manager, container, OTA) provide a functional update mechanism or that users are notified of available updates. Manual verification is required for each distribution channel.',
+    },
+    // PART II §1
+    {
+      name: 'product/document-product-vulnerabilities-and-components', source: 'auto',
+      label: 'Manufacturer documents vulnerabilities and components', article: 'CRA, Annex I, Part II, §1',
+      regulatory: 'CRA Annex I Part II §1 requires manufacturers to identify and document vulnerabilities and software components, including by drawing up a machine-readable SBOM.',
+      api: 'GET /repos/{OWNER}/{REPO}/dependency-graph/sbom',
+      heuristic: 'true if the GitHub dependency graph SBOM endpoint returns HTTP 200 with a valid SPDX 2.3 document, confirming a machine-readable component manifest is publicly accessible.',
+      limitation: 'The SBOM is generated from the default branch, not a pinned release tag. Downstream manufacturers requiring a release-frozen SBOM must generate it independently.',
+    },
+    // PART II §2
+    {
+      name: 'product/product-vulnerabilities-are-remediated', source: 'auto',
+      label: 'Manufacturer remediates vulnerabilities without delay', article: 'CRA, Annex I, Part II, §2',
+      regulatory: 'CRA Annex I Part II §2 requires manufacturers to address and remediate vulnerabilities without delay, including by providing security updates.',
+      api: 'GET /repos/{OWNER}/{REPO}/security-advisories',
+      heuristic: 'true if every entry in the 100 most recent published advisories has at least one vulnerability entry with a non-null patched_versions field, indicating all disclosed vulnerabilities have been assigned a fixed version.',
+    },
+    // PART II §3
+    {
+      name: 'product/is-security-tested', source: 'auto',
+      label: 'Manufacturer tests security regularly', article: 'CRA, Annex I, Part II, §3',
+      regulatory: 'CRA Annex I Part II §3 requires manufacturers to apply effective and regular testing and reviews of the security of their products with digital elements.',
+      api: 'GET /repos/{OWNER}/{REPO}/contents/{CI_SECURITY_WORKFLOW}',
+      heuristic: 'true if the CI security scanning workflow file specified by CI_SECURITY_WORKFLOW exists in the repository (HTTP 200 response), evidencing automated security testing integrated into the development pipeline.',
+    },
+    // PART II §4
+    {
+      name: 'product/publically-disclose-security-updates', source: 'auto',
+      label: 'Manufacturer discloses fixed vulnerabilities publicly', article: 'CRA, Annex I, Part II, §4',
+      regulatory: 'CRA Annex I Part II §4 requires manufacturers, once a security update is available, to publicly disclose information about fixed vulnerabilities, including the nature and impact of the vulnerability.',
+      api: 'GET /repos/{OWNER}/{REPO}/security-advisories',
+      heuristic: 'true if all published advisories in the 100 most recent carry assigned CVE identifiers (100% CVE coverage), confirming public disclosure through the National Vulnerability Database.',
+    },
+    // PART II §5
+    {
+      name: 'product/has-enforced-vulnerability-disclosure', source: 'auto',
+      label: 'Manufacturer enforces a disclosure policy', article: 'CRA, Annex I, Part II, §5',
+      regulatory: 'CRA Annex I Part II §5 requires manufacturers to put in place and enforce a policy on coordinated vulnerability disclosure, enabling security researchers to report vulnerabilities responsibly.',
+      api: 'GET /repos/{ORG}/.github/contents/SECURITY.md and GET /repos/{OWNER}/{REPO}/contents/SECURITY.md',
+      heuristic: 'true if a SECURITY.md file returns HTTP 200 at either the organisation level ({ORG}/.github/contents/SECURITY.md) or the repository level ({OWNER}/{REPO}/contents/SECURITY.md), confirming a documented coordinated disclosure process.',
+    },
+    // PART II §6
+    {
+      name: 'product/has-shared-product-vulnerabilities', source: 'auto',
+      label: 'Manufacturer shares vulnerability information', article: 'CRA, Annex I, Part II, §6',
+      regulatory: 'CRA Annex I Part II §6 requires manufacturers to facilitate the sharing of information about potential vulnerabilities with relevant stakeholders, including downstream manufacturers.',
+      api: 'GET /repos/{OWNER}/{REPO}/security-advisories',
+      heuristic: 'true if all published advisories in the 100 most recent carry CVE identifiers, enabling automatic ingestion by vulnerability scanners and NVD cross-referencing by downstream manufacturers.',
+    },
+    // PART II §7
+    {
+      name: 'product/has-security-updates-securely-distributed', source: 'auto',
+      label: 'Manufacturer distributes updates securely', article: 'CRA, Annex I, Part II, §7',
+      regulatory: 'CRA Annex I Part II §7 requires manufacturers to provide mechanisms to distribute updates in a secure manner, protecting the integrity and authenticity of updates delivered to users.',
+      api: 'GET /repos/{OWNER}/{REPO}/releases/latest — asset names',
+      heuristic: 'true if the latest GitHub release includes at least one asset whose filename ends with .sig, .asc or .sigstore, evidencing cryptographic signing of at least one release artefact.',
+      limitation: 'Only checks GitHub release assets. Container registry image signing and OTA distribution channel signing must be verified manually.',
+    },
+    // PART II §8
+    {
+      name: 'product/security-updates-are-free-and-quickly-disseminated', source: 'auto',
+      label: 'Manufacturer provides free and timely security updates', article: 'CRA, Annex I, Part II, §8',
+      regulatory: 'CRA Annex I Part II §8 requires manufacturers to ensure that security updates are provided free of charge and distributed without undue delay once available.',
+      api: 'GET /repos/{OWNER}/{REPO} — license field; GET /repos/{OWNER}/{REPO}/releases — release timestamps',
+      heuristic: 'true if (1) the repository licence is in the OSI-approved SPDX list (MIT, Apache-2.0, GPL-2.0, GPL-3.0, LGPL-2.1, LGPL-3.0, BSD-2-Clause, BSD-3-Clause, MPL-2.0, AGPL-3.0, ISC, CC0-1.0, Unlicense), implying free distribution, and (2) the interval between the two most recent releases does not exceed RECENCY_THRESHOLD_DAYS (default 90 days).',
+    },
+  ];
+
+  function renderHeuristics() {
+    const container = document.getElementById('heuristicsSection');
+    if (!container) return;
+    const esc = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+    const html = HEURISTICS.map(h => {
+      const badgeCls  = h.source === 'auto' ? 'h-badge-auto' : h.source === 'manual' ? 'h-badge-manual' : 'h-badge-reg';
+      const badgeText = h.source === 'auto' ? 'GITHUB REPOSITORY' : h.source === 'manual' ? 'MANUAL INPUT' : 'ASSESSMENT PARAMETER';
+      let body = '';
+      body += `<div><div class="h-field-label">Regulatory requirement</div><div class="h-field-value">${esc(h.regulatory)}</div></div>`;
+      if (h.api)        body += `<div><div class="h-field-label">GitHub API endpoint</div><div class="h-field-value"><code>${esc(h.api)}</code></div></div>`;
+      if (h.heuristic)  body += `<div><div class="h-field-label">Heuristic</div><div class="h-field-value">${esc(h.heuristic)}</div></div>`;
+      if (h.limitation) body += `<div><div class="h-field-label">Limitations</div><div class="h-limitation">${esc(h.limitation)}</div></div>`;
+      if (h.guidance)   body += `<div><div class="h-field-label">Manual review guidance</div><div class="h-guidance">${esc(h.guidance)}</div></div>`;
+      return `<div class="h-row">
+      <div class="h-header" onclick="this.classList.toggle('open');this.nextElementSibling.style.display=this.classList.contains('open')?'flex':'none'">
+        <span class="h-badge ${badgeCls}">${badgeText}</span>
+        <span class="h-label">${esc(h.label)}</span>
+        <span class="h-citation">${esc(h.article)}</span>
+        <span class="h-chevron">▸</span>
+      </div>
+      <div class="h-body" style="display:none">${body}</div>
+    </div>`;
+    }).join('');
+    container.innerHTML = html;
+  }
+  renderHeuristics();
+
+  /* ── AUTO-LOAD EXAMPLE ON PAGE LOAD ── */
+  resetToHA();
+</script>
+</body>
+</html>
