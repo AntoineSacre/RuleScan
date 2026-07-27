@@ -29,7 +29,8 @@ evaluator/
     main/java/          Java/Spring Boot orchestration layer
     main/resources/
       policies/         CRA Annex I and ISO 27001 policy models (JSON)
-      InfoCollectionMethod/  Generic GitHub collection method template
+      static/           Web UI pages (home-assistant.html, rule-editor.html)
+      templates/        Server-rendered page (index.html)
     test/
       resources/test-cases/  31 black-box test cases (policy + data + expected)
   opa-policies/
@@ -39,7 +40,7 @@ evaluator/
     run.sh              Entry point — collects data and runs assessment
     collect.py          GitHub API collection runner
     config.env          Home Assistant project parameters
-    collection-method-automated.json   29 automated heuristics
+    collection-method-automated.json   25 automated + 4 manual heuristics (29 total)
     collection-method-manual.json      4 manually assessed inputs
     policy.json         CRA Annex I policy model (21 obligations)
     output/             Assessment data file (canonical run)
@@ -86,7 +87,7 @@ Open `http://localhost:8082` in your browser. Three pages are available:
 ```bash
 curl -X POST http://localhost:8082/upload \
   -F "policyFile=@src/main/resources/policies/CRA.json" \
-  -F "inputDataFile=@Home Assistant Use Case/output/CRA-Data-2026-07-13_16-58-41.json"
+  -F "inputDataFile=@path/to/your/data.json"
 ```
 
 ### 5. Run the Home Assistant use case end-to-end

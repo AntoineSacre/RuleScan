@@ -4,15 +4,15 @@ This folder demonstrates a full CRA Annex I compliance assessment of
 [Home Assistant Core](https://github.com/home-assistant/core) (version 2026.6.1)
 using the automated collection method and assessment engine in this repository.
 It is designed as a **template**: fork it, update `config.env` and
-`manual-values.json`, and run `./run.sh` against any GitHub-hosted project.
+`collection-method-manual.json`, and run `./run.sh` against any GitHub-hosted project.
 
 ---
 
 ## What it does
 
-1. Reads the generic collection method (`src/main/resources/InfoCollectionMethod/CRA-GitHub.json`)
-2. Executes the 26 automated heuristics against the GitHub API and repository structure
-3. Loads the 4 pre-filled manual and regulatory operand values from `manual-values.json`
+1. Reads the collection method from `collection-method-automated.json`
+2. Executes the 25 automated heuristics against the GitHub API and repository structure
+3. Loads the 4 manually assessed input values from `collection-method-manual.json`
 4. Writes a complete data file to `generated-json/` ready to submit to the assessment engine
 
 ---
@@ -86,9 +86,9 @@ You can also adjust the three numeric thresholds:
 | `HIGH_CRITICAL_FRACTION_THRESHOLD` | 0.4 | Advisory severity threshold for cybersecurity-level |
 | `ATTACK_SURFACE_THRESHOLD` | 500 | Max integration count for limited-attack-surfaces |
 
-### 2. Update `manual-values.json`
+### 2. Update `collection-method-manual.json`
 
-Four operands cannot be derived automatically and must be assessed manually:
+Four inputs cannot be derived automatically and must be assessed manually:
 
 | Operand | How to determine |
 |---|---|
@@ -108,8 +108,7 @@ Home Assistant Use Case/
   run.sh                  entry point — sources config and runs collect.py
   collect.py              collection runner
   config.env              parameter values for Home Assistant Core
-  manual-values.json      pre-filled manual and regulatory operands
-  collection-method-automated.json   GitHub heuristics for all 26 automated operands
+  collection-method-automated.json   25 automated + 4 manual heuristics (29 total)
   collection-method-manual.json      pre-filled values for the 4 manual/regulatory operands
   policy.json                        CRA Annex I policy model (21 rules)
   output/                 generated data files (created on first run)
