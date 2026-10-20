@@ -16,7 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,6 +63,33 @@ class EvaluatorTest {
             String actualStatus = resolveObligationStatus(result, uuid);
             assertEquals(expectedStatus, actualStatus,
                     "Obligation [" + uuid + "] status mismatch in test: " + testName);
+        });
+
+        // Optional: evidence basis of selected rules or permissions
+        expected.path("basis").fields().forEachRemaining(entry -> {
+            String uuid = entry.getKey();
+            Map<String, String> actual = null;
+            if (result.getRule_basis() != null) actual = result.getRule_basis().get(uuid);
+            if (actual == null && result.getPermission_basis() != null) actual = result.getPermission_basis().get(uuid);
+            assertEquals(entry.getValue().path("applicability").asText(),
+                    actual == null ? null : actual.get("applicability"),
+                    "Applicability basis [" + uuid + "] mismatch in test: " + testName);
+            assertEquals(entry.getValue().path("satisfaction").asText(),
+                    actual == null ? null : actual.get("satisfaction"),
+                    "Satisfaction basis [" + uuid + "] mismatch in test: " + testName);
+        });
+
+        // Optional: missing operands reported for selected rules or permissions (an empty list means none)
+        expected.path("missing").fields().forEachRemaining(entry -> {
+            String uuid = entry.getKey();
+            Set<String> expectedOps = new HashSet<>();
+            entry.getValue().forEach(n -> expectedOps.add(n.asText()));
+            Set<String> actualOps = new HashSet<>();
+            if (result.getMissing_operands_by_rule() != null && result.getMissing_operands_by_rule().get(uuid) != null) {
+                actualOps.addAll(result.getMissing_operands_by_rule().get(uuid));
+            }
+            assertEquals(expectedOps, actualOps,
+                    "Missing operands [" + uuid + "] mismatch in test: " + testName);
         });
 
         expected.path("permissions").fields().forEachRemaining(entry -> {
