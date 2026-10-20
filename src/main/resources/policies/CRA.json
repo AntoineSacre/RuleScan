@@ -7,7 +7,7 @@
       "uuid": "cra:annex:i:p1:1:cond",
       "label": "Product includes digital elements",
       "description": "Checks that the product includes digital elements. Gates all CRA Annex I obligations — only products with digital elements are in scope.",
-      "source": "CRA, Art. 2 — Scope",
+      "source": "CRA, Annex I, Part I, (1)",
       "predicateConstraints": [
         {
           "leftOperand": "product/has-digital-element",
@@ -20,7 +20,7 @@
       "uuid": "cra:annex:i:p1:3:a:cond",
       "label": "Product allows user configuration",
       "description": "Checks that the product can be configured by the user. Gates the secure-by-default obligation, which only applies to configurable products.",
-      "source": "CRA, Annex I, Part I, §3(a)",
+      "source": "CRA, Annex I, Part I, (2)(b)",
       "predicateConstraints": [
         {
           "leftOperand": "product/allow-configuration",
@@ -33,7 +33,7 @@
       "uuid": "cra:annex:i:p1:3:b:cond",
       "label": "Product restricts access",
       "description": "Checks that the product restricts access to authorised users. Gates the access control obligation, which only applies to products that enforce access control.",
-      "source": "CRA, Annex I, Part I, §3(b)",
+      "source": "CRA, Annex I, Part I, (2)(d)",
       "predicateConstraints": [
         {
           "leftOperand": "product/has-restricted-access",
@@ -46,7 +46,7 @@
       "uuid": "cra:annex:i:p1:3:c:cond",
       "label": "Product processes or stores data",
       "description": "Checks that the product processes or stores data. Gates the encryption and data minimisation obligations, which only apply to products that handle data.",
-      "source": "CRA, Annex I, Part I, §3(c)",
+      "source": "CRA, Annex I, Part I, (2)(e)",
       "predicateConstraints": [
         {
           "leftOperand": "product/process-data",
@@ -59,7 +59,7 @@
       "uuid": "cra:annex:i:p1:3:g:cond",
       "label": "Product uses external services",
       "description": "Checks that the product relies on external or third-party services. Gates the external service resilience obligation, which only applies to products with external integrations.",
-      "source": "CRA, Annex I, Part I, §3(g)",
+      "source": "CRA, Annex I, Part I, (2)(i)",
       "predicateConstraints": [
         {
           "leftOperand": "product/use-external-services",
@@ -72,7 +72,7 @@
       "uuid": "cra:annex:i:p1:3:h:cond",
       "label": "Product exposes a digital interface",
       "description": "Checks that the product exposes a digital interface (network API, communication endpoint). Gates the attack surface limitation obligation, which only applies to products with exposed interfaces.",
-      "source": "CRA, Annex I, Part I, §3(h)",
+      "source": "CRA, Annex I, Part I, (2)(j)",
       "predicateConstraints": [
         {
           "leftOperand": "product/has-digital-interface",
@@ -104,7 +104,7 @@
           "uuid": "cra:annex:i:p1:1:rule",
           "label": "Product ensures appropriate cybersecurity level",
           "description": "CRA Annex I, Part I, §1. Products with digital elements shall ensure an appropriate level of cybersecurity based on the risks. Checks that the product's cybersecurity level meets or exceeds the applicable regulatory threshold.",
-          "source": "CRA, Annex I, Part I, §1",
+          "source": "CRA, Annex I, Part I, (1)",
           "preConditionConstraints": [
             {
               "uuid": "cra:annex:i:p1:1:cond"
@@ -122,7 +122,7 @@
           "uuid": "cra:annex:i:p1:2:rule",
           "label": "Product has no known exploitable vulnerabilities",
           "description": "CRA Annex I, Part I, §2. Products with digital elements shall be delivered without any known exploitable vulnerabilities. Checks that all published security advisories have associated patch versions, confirming all disclosed vulnerabilities have been remediated.",
-          "source": "CRA, Annex I, Part I, §2",
+          "source": "CRA, Annex I, Part I, (2)(a)",
           "preConditionConstraints": [
             {
               "uuid": "cra:annex:i:p1:1:cond"
@@ -130,7 +130,7 @@
           ],
           "predicateConstraints": [
             {
-              "leftOperand": "product/has-known-exploitable-vulnerabilities",
+              "leftOperand": "product/is-free-of-known-exploitable-vulnerabilities",
               "operator": "eq",
               "rightOperand": "true"
             }
@@ -140,7 +140,7 @@
           "uuid": "cra:annex:i:p1:3:a:rule",
           "label": "Product ships with secure default configuration",
           "description": "CRA Annex I, Part I, §3(a). Products shall be deployable and usable in a secure configuration. Checks that the product ships with secure defaults and does not include hardcoded default passwords.",
-          "source": "CRA, Annex I, Part I, §3(a)",
+          "source": "CRA, Annex I, Part I, (2)(b)",
           "preConditionConstraints": [
             {
               "operator": "and",
@@ -166,7 +166,7 @@
           "uuid": "cra:annex:i:p1:3:b:rule",
           "label": "Product enforces access control",
           "description": "CRA Annex I, Part I, §3(b). Products that restrict access shall implement appropriate access control mechanisms. Checks that the product enforces strong authentication by default and supports scoped access tokens to limit privilege.",
-          "source": "CRA, Annex I, Part I, §3(b)",
+          "source": "CRA, Annex I, Part I, (2)(d)",
           "preConditionConstraints": [
             {
               "operator": "and",
@@ -192,7 +192,7 @@
           "uuid": "cra:annex:i:p1:3:c:rule",
           "label": "Product encrypts data",
           "description": "CRA Annex I, Part I, §3(c). Products that process or store data shall protect confidentiality by encrypting data at rest and in transit. Checks that the product implements encrypted transport and storage mechanisms.",
-          "source": "CRA, Annex I, Part I, §3(c)",
+          "source": "CRA, Annex I, Part I, (2)(e)",
           "preConditionConstraints": [
             {
               "operator": "and",
@@ -218,7 +218,7 @@
           "uuid": "cra:annex:i:p1:3:d:rule",
           "label": "Product protects data and software integrity",
           "description": "CRA Annex I, Part I, §3(d). Products shall protect the integrity of stored, transmitted or processed data, commands and configurations against unauthorised modification. Checks that cryptographic signing mechanisms are in place for software artefacts.",
-          "source": "CRA, Annex I, Part I, §3(d)",
+          "source": "CRA, Annex I, Part I, (2)(f)",
           "preConditionConstraints": [
             {
               "uuid": "cra:annex:i:p1:1:cond"
@@ -236,7 +236,7 @@
           "uuid": "cra:annex:i:p1:3:e:rule",
           "label": "Product minimises data collection",
           "description": "CRA Annex I, Part I, §3(e). Products that process data shall collect only data adequate, relevant and limited to what is necessary. Checks that data collection is opt-in by default.",
-          "source": "CRA, Annex I, Part I, §3(e)",
+          "source": "CRA, Annex I, Part I, (2)(g)",
           "preConditionConstraints": [
             {
               "operator": "and",
@@ -262,7 +262,7 @@
           "uuid": "cra:annex:i:p1:3:f:rule",
           "label": "Product preserves availability of essential functions",
           "description": "CRA Annex I, Part I, §3(f). Products shall protect the availability of their essential functions, including resilience against denial-of-service attacks. Checks that the product provides built-in availability or automatic recovery mechanisms.",
-          "source": "CRA, Annex I, Part I, §3(f)",
+          "source": "CRA, Annex I, Part I, (2)(h)",
           "preConditionConstraints": [
             {
               "uuid": "cra:annex:i:p1:1:cond"
@@ -280,7 +280,7 @@
           "uuid": "cra:annex:i:p1:3:g:rule",
           "label": "Product resists external service disruption",
           "description": "CRA Annex I, Part I, §3(g). Products shall minimise their negative impact on the availability of services provided by other devices or networks they depend on. Checks that the product continues operating essential functions when external services are unavailable.",
-          "source": "CRA, Annex I, Part I, §3(g)",
+          "source": "CRA, Annex I, Part I, (2)(i)",
           "preConditionConstraints": [
             {
               "operator": "and",
@@ -306,7 +306,7 @@
           "uuid": "cra:annex:i:p1:3:h:rule",
           "label": "Product limits its attack surface",
           "description": "CRA Annex I, Part I, §3(h). Products shall be designed to limit attack surfaces, including external interfaces. Checks that the number of exposed network integration endpoints remains within acceptable bounds.",
-          "source": "CRA, Annex I, Part I, §3(h)",
+          "source": "CRA, Annex I, Part I, (2)(j)",
           "preConditionConstraints": [
             {
               "operator": "and",
@@ -332,7 +332,7 @@
           "uuid": "cra:annex:i:p1:3:i:rule",
           "label": "Product applies exploitation mitigations",
           "description": "CRA Annex I, Part I, §3(i). Products shall reduce the impact of incidents using appropriate exploitation mitigation techniques. Checks that the product targets a runtime providing OS-level mitigations such as ASLR and DEP.",
-          "source": "CRA, Annex I, Part I, §3(i)",
+          "source": "CRA, Annex I, Part I, (2)(k)",
           "preConditionConstraints": [
             {
               "uuid": "cra:annex:i:p1:1:cond"
@@ -350,7 +350,7 @@
           "uuid": "cra:annex:i:p1:3:j:rule",
           "label": "Product logs security events",
           "description": "CRA Annex I, Part I, §3(j). Products shall provide security information by recording and monitoring relevant internal activity, including access to or modification of data, services or functions. Checks that the product includes a security event logging component.",
-          "source": "CRA, Annex I, Part I, §3(j)",
+          "source": "CRA, Annex I, Part I, (2)(l)",
           "preConditionConstraints": [
             {
               "uuid": "cra:annex:i:p1:1:cond"
@@ -368,7 +368,7 @@
           "uuid": "cra:annex:i:p1:3:k:rule",
           "label": "Product supports security updates",
           "description": "CRA Annex I, Part I, §3(k). Products shall ensure that vulnerabilities can be addressed through security updates. Checks that the product has a release mechanism through which users can receive and apply updates.",
-          "source": "CRA, Annex I, Part I, §3(k)",
+          "source": "CRA, Annex I, Part I, (2)(c)",
           "preConditionConstraints": [
             {
               "uuid": "cra:annex:i:p1:1:cond"
