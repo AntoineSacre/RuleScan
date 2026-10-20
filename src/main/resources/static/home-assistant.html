@@ -294,6 +294,25 @@
     html.dark .missing-chip { background: rgba(245,158,11,.08); color: #fbbf24; border-color: rgba(245,158,11,.25); }
     th[data-sort-type] { cursor: pointer; user-select: none; }
     th[data-sort-type]:hover { background: var(--paper); }
+    #ruleTableBody tr[data-rule-id] { cursor: pointer; }
+    #ruleTableBody tr[data-rule-id]:hover td { background: var(--paper2); }
+    .row-highlight td { background: rgba(122,82,0,.09) !important; }
+    html.dark .row-highlight td { background: rgba(245,158,11,.10) !important; }
+    .rule-chevron { display: inline-block; font-size: 0.65rem; margin-right: 7px; color: var(--ink3); transition: transform .18s; vertical-align: middle; }
+    tr.row-expanded > td:first-child .rule-chevron { transform: rotate(90deg); }
+    .rule-expand-tr td { padding: 0 !important; background: var(--paper2); }
+    .rule-expand-panel { display: flex; border-top: 1px solid var(--line); }
+    .expand-col { flex: 1; padding: 14px 16px; }
+    .expand-col + .expand-col { border-left: 1px solid var(--line); }
+    .expand-col-title { font-size: 0.57rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink3); margin-bottom: 10px; font-weight: 600; }
+    .expand-input-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line); }
+    .expand-input-row:last-of-type { border-bottom: none; }
+    .expand-input-name { flex: 1; font-family: 'Courier Prime', monospace; font-size: 0.68rem; color: var(--ink2); word-break: break-all; }
+    .expand-check { font-size: 0.8rem; font-weight: 700; width: 16px; text-align: center; flex-shrink: 0; }
+    .expand-check.pass { color: var(--green); }
+    .expand-check.fail { color: var(--accent); }
+    .expand-hint { margin-top: 10px; font-size: 0.68rem; color: var(--ink3); line-height: 1.55; border-top: 1px solid var(--line); padding-top: 8px; }
+    .expand-hint strong { color: var(--ink2); }
     th.sort-asc::after  { content: ' ▲'; font-size: 0.65em; opacity: 0.5; }
     th.sort-desc::after { content: ' ▼'; font-size: 0.65em; opacity: 0.5; }
     #rsscan-tip { position: fixed; z-index: 9999; background: #1c1c1e; color: #f5f5f7; padding: 8px 12px; border-radius: 5px; font-size: 0.73rem; line-height: 1.5; max-width: 300px; pointer-events: none; display: none; box-shadow: 0 4px 16px rgba(0,0,0,.22); white-space: normal; }
@@ -338,7 +357,6 @@
     </div>
     <div class="nav-links">
       <a href="/">ENGINE</a>
-      <a href="/cra">CRA ASSESSMENT</a>
       <a href="/rule-editor.html">RULE EDITOR</a>
       <a href="/home-assistant.html" class="active">HOME ASSISTANT</a>
     </div>
@@ -360,8 +378,8 @@
     <div class="hero-meta">
       Assess any GitHub-hosted project<br>
       against the EU Cyber Resilience Act (CRA).<br>
-      <strong>25 of 29 inputs collected automatically.</strong>
-      4 require manual input below.
+      <strong>24 of 29 inputs collected automatically.</strong>
+      5 require manual input below.
     </div>
   </div>
 
@@ -551,20 +569,20 @@
         <span class="panel-title">Assessment Results</span>
       </div>
 
-      <div class="conn-flash offline" id="connBanner" style="margin:10px 16px 0; border-radius:4px;">
+      <div class="conn-flash offline" id="connBanner" style="margin:10px 16px 0; border-radius:4px; display:none;">
         <div class="conn-dot"></div>
         <span>Assessment engine offline — results below are pre-computed for Home Assistant Core 2026.6.1. Start the engine (<code style="background:rgba(122,82,0,.1);border:1px solid var(--amber);padding:1px 4px;border-radius:3px;font-size:0.75rem;">docker compose up -d</code> then <code style="background:rgba(122,82,0,.1);border:1px solid var(--amber);padding:1px 4px;border-radius:3px;font-size:0.75rem;">./mvnw spring-boot:run</code>) to enable live evaluation.</span>
       </div>
 
       <!-- Example tag -->
-      <div class="example-tag" id="exampleTag">★ Example — Home Assistant Core 2026.6.1</div>
+      <div class="example-tag" id="exampleTag" style="display:none;">★ Example — Home Assistant Core 2026.6.1</div>
 
       <!-- Verdict -->
       <div class="stamp-wrap" id="stampWrap">
         <div class="stamp deny">NON-COMPLIANT</div>
         <div class="stamp-meta">
           <strong>One or more rules violated.</strong>
-          All 21 rules active · 17 satisfied · 4 violated
+          All 21 rules active · 16 satisfied · 5 violated
         </div>
       </div>
 
@@ -812,8 +830,8 @@ Violated obligations:
           &nbsp;&nbsp;<span class="ft-file">run.sh</span>                          <span class="ft-note">— entry point</span><br>
           &nbsp;&nbsp;<span class="ft-file">collect.py</span>                       <span class="ft-note">— collection runner</span><br>
           &nbsp;&nbsp;<span class="ft-file">config.env</span>                       <span class="ft-note">— project parameters</span><br>
-          &nbsp;&nbsp;<span class="ft-file">collection-method-automated.json</span> <span class="ft-note">— 29 automated heuristics</span><br>
-          &nbsp;&nbsp;<span class="ft-file">collection-method-manual.json</span>    <span class="ft-note">— 4 manually assessed inputs</span><br>
+          &nbsp;&nbsp;<span class="ft-file">collection-method.json</span>           <span class="ft-note">— 29 heuristics (24 automated + 5 manually provided)</span><br>
+          &nbsp;&nbsp;<span class="ft-file">collection-method-manual.json</span>    <span class="ft-note">— 5 manually assessed inputs</span><br>
           &nbsp;&nbsp;<span class="ft-file">policy.json</span>                      <span class="ft-note">— CRA Annex I policy (21 rules)</span><br>
           &nbsp;&nbsp;<span class="ft-dir">output/</span>                          <span class="ft-note">— generated data files</span><br>
           &nbsp;&nbsp;<span class="ft-file">index.html</span>                       <span class="ft-note">— this page</span>
@@ -943,6 +961,7 @@ Violated obligations:
     'cra:annex:i:p2:8:rule':  'CRA, Annex I, Part II, §8',
   };
   let labelMap = {...CRA_LABELS}, sourceMap = {...CRA_SOURCES}, descriptionMap = {...CRA_DESCRIPTIONS};
+  let _ros = {}, _ops = {}, _active = [], _violated = [];
   fetch('/ha/labels').then(r => r.ok ? r.json() : {}).then(d => {
     labelMap       = {...CRA_LABELS,        ...(d.labelMap       || {})};
     sourceMap      = {...CRA_SOURCES,       ...(d.sourceMap      || {})};
@@ -1011,17 +1030,18 @@ Violated obligations:
     hideDetails();
     clearTableSort('ruleTableBody');
     document.getElementById('resultsPanel').classList.add('results-example');
-    document.getElementById('exampleTag').style.display = '';
+    document.getElementById('exampleTag').style.display = 'none';
+    document.getElementById('connBanner').style.display = 'none';
     document.getElementById('stampWrap').innerHTML = `
       <div class="stamp deny">NON-COMPLIANT</div>
       <div class="stamp-meta">
         <strong>One or more rules violated.</strong>
-        All 21 rules active &middot; 17 satisfied &middot; 4 violated
+        All 21 rules active &middot; 16 satisfied &middot; 5 violated
       </div>`;
     document.getElementById('statsBar').innerHTML = `
       <div class="stat-cell s-total"><div class="stat-value">21</div><div class="stat-label">Active</div></div>
-      <div class="stat-cell s-ok">   <div class="stat-value">17</div><div class="stat-label">Satisfied</div></div>
-      <div class="stat-cell s-bad">  <div class="stat-value">4</div> <div class="stat-label">Violated</div></div>
+      <div class="stat-cell s-ok">   <div class="stat-value">16</div><div class="stat-label">Satisfied</div></div>
+      <div class="stat-cell s-bad">  <div class="stat-value">5</div> <div class="stat-label">Violated</div></div>
       <div class="stat-cell s-na">   <div class="stat-value">0</div> <div class="stat-label">Missing</div></div>`;
     const rows = [
       ['cra:annex:i:p1:1:rule','ok'], ['cra:annex:i:p1:2:rule','ok'],
@@ -1127,12 +1147,12 @@ Violated obligations:
       ops['product/cybersecurity-level'] = (total > 0 && hc / total > HC_FRAC) ? 3 : 1;
     } catch { ops['product/cybersecurity-level'] = 1; }
 
-    /* 4 */ setOp('product/has-known-exploitable-vulnerabilities');
+    /* 4 */ setOp('product/is-free-of-known-exploitable-vulnerabilities');
     try {
       const advs = await getAdvisories();
-      ops['product/has-known-exploitable-vulnerabilities'] =
+      ops['product/is-free-of-known-exploitable-vulnerabilities'] =
         (advs.length > 0 && advs.every(a => a.vulnerabilities && a.vulnerabilities.length > 0 && a.vulnerabilities.every(v => v.patched_versions !== null))) ? 'true' : 'false';
-    } catch { ops['product/has-known-exploitable-vulnerabilities'] = 'false'; }
+    } catch { ops['product/is-free-of-known-exploitable-vulnerabilities'] = 'false'; }
 
     /* 5 */ setOp('product/ensure-integrity');
     try {
@@ -1289,6 +1309,67 @@ Violated obligations:
   const escAttr = s => s ? s.replace(/&/g, '&amp;').replace(/"/g, '&quot;') : '';
 
   /* ── DETAIL TABLES ── */
+  function toggleRuleExpand(tr, ruleId) {
+    const existingId = 'xrow-' + ruleId.replace(/:/g, '_');
+    const existing = document.getElementById(existingId);
+    if (existing) {
+      existing.remove();
+      tr.classList.remove('row-expanded');
+      return;
+    }
+    // Close any other open expansion
+    document.querySelectorAll('#ruleTableBody .rule-expand-tr').forEach(r => r.remove());
+    document.querySelectorAll('#ruleTableBody tr.row-expanded').forEach(r => r.classList.remove('row-expanded'));
+    tr.classList.add('row-expanded');
+
+    const split     = _ros[ruleId] || {};
+    const preOps    = split.preconditionOperands  || [];
+    const conOps    = split.constraintOperands    || [];
+    const isViolated = _violated.includes(ruleId);
+
+    function inputRow(op, isPass) {
+      const val = _ops[op] !== undefined ? String(_ops[op]) : '?';
+      return `<div class="expand-input-row">
+        <span class="expand-input-name">${op}</span>
+        <span class="badge badge-outline">${val}</span>
+        <span class="expand-check ${isPass ? 'pass' : 'fail'}">${isPass ? '✓' : '✗'}</span>
+      </div>`;
+    }
+
+    const preHtml = preOps.length
+      ? preOps.map(op => inputRow(op, true)).join('')
+      : '<span style="color:var(--ink3);font-size:0.75rem;">No conditions — rule always applies.</span>';
+    const preHint = preOps.length
+      ? `<div class="expand-hint">To <strong>exempt</strong>: change one of these inputs so the rule no longer applies to this product.</div>`
+      : '';
+
+    const conHtml = conOps.length
+      ? conOps.map(op => inputRow(op, !isViolated)).join('')
+      : '<span style="color:var(--ink3);font-size:0.75rem;">—</span>';
+    const conHint = conOps.length
+      ? isViolated
+        ? `<div class="expand-hint">To <strong>comply</strong>: fix the inputs marked ✗ above.</div>`
+        : `<div class="expand-hint">All conditions are currently satisfied.</div>`
+      : '';
+
+    const xrow = document.createElement('tr');
+    xrow.id = existingId;
+    xrow.className = 'rule-expand-tr';
+    xrow.innerHTML = `<td colspan="2" style="padding:0;">
+      <div class="rule-expand-panel">
+        <div class="expand-col">
+          <div class="expand-col-title">Why this rule applies</div>
+          ${preHtml}${preHint}
+        </div>
+        <div class="expand-col">
+          <div class="expand-col-title">${isViolated ? 'Why this rule is violated' : 'Why this rule is satisfied'}</div>
+          ${conHtml}${conHint}
+        </div>
+      </div>
+    </td>`;
+    tr.after(xrow);
+  }
+
   function showDetails(result, operands, ruleOperandSplit) {
     clearTableSort('detailComplianceBody');
     clearTableSort('detailOperandsBody');
@@ -1379,6 +1460,7 @@ Violated obligations:
     clearTableSort('ruleTableBody');
     document.getElementById('resultsPanel').classList.remove('results-example');
     document.getElementById('exampleTag').style.display = 'none';
+    document.getElementById('connBanner').style.display = '';
     document.getElementById('stampWrap').innerHTML = `
       <div class="result-placeholder" style="flex:1;">
         <div class="ph-icon" style="animation:spin 1.2s linear infinite;display:inline-block;">↻</div>
@@ -1398,9 +1480,11 @@ Violated obligations:
     const violated = result.violated_rules || [];
     const ok       = active.filter(r => !violated.includes(r));
     const allow    = result.allow;
+    _active = active; _violated = violated;
 
     document.getElementById('resultsPanel').classList.remove('results-example');
     document.getElementById('exampleTag').style.display = 'none';
+    document.getElementById('connBanner').style.display = '';
     document.getElementById('stampWrap').innerHTML = `
       <div class="stamp ${allow ? 'allow' : 'deny'}">${allow ? 'COMPLIANT' : 'NON-COMPLIANT'}</div>
       <div class="stamp-meta">
@@ -1417,8 +1501,8 @@ Violated obligations:
       const name = labelMap[id] || id;
       const src  = sourceMap[id] ? `<div class="rule-src">${sourceMap[id]}</div>` : '';
       const desc = descriptionMap[id] ? ` data-tooltip="${escAttr(descriptionMap[id])}"` : '';
-      return `<tr class="row-${bad?'bad':'ok'}">
-        <td class="rule-id" title="${id}"${desc}>${name}${src}</td>
+      return `<tr class="row-${bad?'bad':'ok'}" data-rule-id="${id}" onclick="toggleRuleExpand(this,'${id}')">
+        <td class="rule-id" title="${id}"${desc}><span class="rule-chevron">▶</span>${name}${src}</td>
         <td style="text-align:center;"><span class="badge ${bad?'badge-red':'badge-green'}">${bad?'Violated':'Compliant'}</span></td>
       </tr>`;
     }).join('');
@@ -1476,6 +1560,8 @@ Violated obligations:
       const ruleOperandSplit = json.ruleOperandSplit || {};
       if (json.labelMap)  labelMap  = {...CRA_LABELS,  ...json.labelMap};
       if (json.sourceMap) sourceMap = {...CRA_SOURCES, ...json.sourceMap};
+      _ros = ruleOperandSplit;
+      _ops = operands;
       showResults(result, `${owner}/${repo}`);
       showDetails(result, operands, ruleOperandSplit);
     } catch (err) {
@@ -1649,7 +1735,7 @@ Violated obligations:
       label: 'Product cybersecurity level', article: 'CRA, Annex I, Part I, §1',
       regulatory: 'CRA Annex I §1 requires products to ensure an appropriate level of cybersecurity based on the risks. This input provides the measured level, compared against the threshold set by values/appropriate-level.',
       api: 'GET /repos/{OWNER}/{REPO}/security-advisories',
-      heuristic: 'Baseline level 1 (Low) for CRA Class I products (not listed in Annex III or IV). Level raised to 3 (Moderate) if the fraction of HIGH or CRITICAL advisories in the 100 most recent published advisories exceeds HIGH_CRITICAL_FRACTION_THRESHOLD (default 0.40).',
+      heuristic: 'Baseline level 1 (Low) for CRA Class I products (not listed in Annex III or IV). Manually assess whether the observed vulnerability severity or deployment context warrants raising the level to 3 (Moderate) or 5 (High).',
       limitation: 'This heuristic characterises observed vulnerability severity in published advisories and should not be interpreted as evidence of inherent design quality. Products with few published advisories may receive level 1 regardless of actual risk.',
     },
     {
@@ -1660,7 +1746,7 @@ Violated obligations:
     },
     // PART I §2
     {
-      name: 'product/has-known-exploitable-vulnerabilities', source: 'auto',
+      name: 'product/is-free-of-known-exploitable-vulnerabilities', source: 'auto',
       label: 'Product has no known exploitable vulnerabilities', article: 'CRA, Annex I, Part I, §2',
       regulatory: 'CRA Annex I §2 requires products to be delivered without known exploitable vulnerabilities. All disclosed vulnerabilities must be patched before or at delivery.',
       api: 'GET /repos/{OWNER}/{REPO}/security-advisories',
