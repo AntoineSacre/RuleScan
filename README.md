@@ -4,7 +4,7 @@ A compliance assessment engine for evaluating software products against machine-
 
 This repository accompanies the paper:
 
-> **Automated Regulatory Compliance Assessment for Open-Source Software: A Policy-Driven Approach Applied to the Cyber Resilience Act**
+> **Automated Regulatory Compliance Assessment for Open-Source Software: A Machine-Readable Policy Approach Applied to the Cyber Resilience Act**
 > Antoine Sacré, Dara Tith, Benoit Hosselet, Jean-Noël Colin
 > University of Namur / Comexis Partners, 2026
 
@@ -15,9 +15,9 @@ This repository accompanies the paper:
 The engine takes two inputs:
 
 1. **A policy file** — a regulatory framework modelled as a JSON document, with obligations, permissions, pre-conditions, and predicate constraints.
-2. **A data file** — a flat JSON object mapping input names to boolean or integer values derived from the system under assessment.
+2. **A data file** — a flat JSON object mapping input names to values (booleans, numbers, strings or lists) derived from the system under assessment.
 
-It returns a rule-level compliance report: which obligations and permissions are active (pre-conditions satisfied), which are satisfied, which are violated, and which input values drove each outcome.
+It returns a rule-level compliance report: which obligations and permissions are active (pre-conditions satisfied), which are satisfied, which are violated, and which input values drove each outcome. Each outcome comes with an evidence basis stating whether it is established by the evidence or results from missing inputs, which are listed rule by rule.
 
 ---
 
@@ -32,18 +32,20 @@ evaluator/
       static/           Web UI pages (home-assistant.html, rule-editor.html)
       templates/        Server-rendered page (index.html)
     test/
-      resources/test-cases/  31 black-box test cases (policy + data + expected)
+      resources/test-cases/  34 black-box test cases (policy + data + expected)
   opa-policies/
     policies.rego       Generic Rego evaluation logic (OPA)
   docker-compose.yml    Starts OPA on port 8181
-  Home Assistant Use Case/
-    run.sh              Entry point — collects data and runs assessment
+  collection-methods/github/
     collect.py          GitHub API collection runner
+    collection-method.json   29 heuristic definitions (24 automated + 5 manually provided)
+    config.env.template      Parameters for a new project
+  use-cases/home-assistant/
+    run.sh              Entry point — collects data and runs assessment
     config.env          Home Assistant project parameters
-    collection-method-automated.json   25 automated + 4 manual heuristics (29 total)
-    collection-method-manual.json      4 manually assessed inputs
+    collection-method-manual.json      5 manually assessed inputs
     policy.json         CRA Annex I policy model (21 obligations)
-    output/             Assessment data file (canonical run)
+    evidence/2026.6.1/  Evidence package used in the paper
     index.html          Visual summary of the use case
 ```
 
@@ -96,11 +98,11 @@ curl -X POST http://localhost:8082/upload \
 # Optional: set a GitHub token to avoid rate limiting (60 req/hour without)
 export GITHUB_TOKEN=ghp_...
 
-cd "Home Assistant Use Case"
+cd use-cases/home-assistant
 ./run.sh
 ```
 
-The script collects all 29 inputs from GitHub's public API and, if OPA is running, prints the compliance verdict.
+The script collects the 24 automated inputs from GitHub's public API, adds the 5 manually assessed inputs and, if OPA is running, prints the compliance verdict.
 
 ---
 
@@ -121,13 +123,13 @@ Policies are JSON documents following the ODRL information model, extended with 
 ./mvnw test
 ```
 
-31 parameterised test cases run automatically. Each test case is a self-contained directory under `src/test/resources/test-cases/` containing `policy.json`, `data.json`, and `expected.json`.
+34 parameterised test cases run automatically. Each test case is a self-contained directory under `src/test/resources/test-cases/` containing `policy.json`, `data.json`, and `expected.json`.
 
 ---
 
 ## Home Assistant use case
 
-The `Home Assistant Use Case/` folder is a self-contained template demonstrating a full CRA Annex I assessment of [Home Assistant Core](https://github.com/home-assistant/core) (version 2026.6.1). Open `index.html` in a browser for a visual summary of the results.
+The `use-cases/home-assistant/` folder is a self-contained template demonstrating a full CRA Annex I assessment of [Home Assistant Core](https://github.com/home-assistant/core) (version 2026.6.1). Open `index.html` in a browser for a visual summary of the results.
 
 To adapt it for another GitHub-hosted project, update `config.env` (repository identifiers and file paths) and `collection-method-manual.json` (manually assessed inputs), then run `./run.sh`.
 
@@ -135,11 +137,15 @@ To adapt it for another GitHub-hosted project, update `config.env` (repository i
 
 ## Assessment result — Home Assistant Core 2026.6.1
 
-| Verdict | Active rules | Satisfied | Violated |
-|---|---|---|---|
-| NON-COMPLIANT | 21 | 17 | 4 |
+| Active rules | Satisfied | Violated |
+|---|---|---|
+| 21 | 14 | 7 |
 
-25 of 29 inputs (86%) were derived automatically from GitHub's public API without authentication.
+24 of 29 inputs (83%) were derived automatically from GitHub's public API without authentication: 8 constitute direct evidence and 16 are proxy indicators. This is a pre-assessment of a component, not a conformity determination of a product.
+
+### Evidence package
+
+`use-cases/home-assistant/evidence/2026.6.1/` contains the evidence used in the paper: the input values (`CRA-Data-*.json`), the engine output (`CRA-OPA-*.json`) and, for each input, the API endpoints queried and the raw responses (`CRA-Evidence-*.json`). The collection is pinned to the commit of release 2026.6.1 (`7391209f48abd1d3dde50dc694aa875244ead86a`) and was run on 19 October 2026 for an assessment date of 11 June 2026.
 
 ---
 
