@@ -1,0 +1,37 @@
+{
+  "allow": true,
+  "obligations": {
+    "iso27001:A.5.15:obligation:policy-documented":      "satisfied",
+    "iso27001:A.5.15:obligation:model":                  "satisfied",
+    "iso27001:A.5.15:obligation:least-privilege":        "satisfied",
+    "iso27001:A.5.12:obligation:classification-scheme":  "satisfied",
+    "iso27001:A.5.12:obligation:classification-levels":  "satisfied",
+    "iso27001:A.5.12:obligation:asset-owner-assigned":   "satisfied",
+    "iso27001:A.8.5:obligation:mfa-enabled":             "inactive",
+    "iso27001:A.8.5:obligation:password-length":         "satisfied",
+    "iso27001:A.8.5:obligation:lockout-threshold":       "satisfied",
+    "iso27001:A.8.7:obligation:malware-deployed":        "inactive",
+    "iso27001:A.8.7:obligation:realtime-scan":           "inactive",
+    "iso27001:A.8.7:obligation:signature-update-interval": "inactive",
+    "iso27001:A.8.24:obligation:symmetric-algorithm":    "inactive",
+    "iso27001:A.8.24:obligation:tls-version":            "inactive",
+    "iso27001:A.8.24:obligation:key-management-policy":  "inactive",
+    "iso27001:A.8.20:obligation:firewall":               "inactive",
+    "iso27001:A.8.20:obligation:network-zones":          "inactive",
+    "iso27001:A.8.20:obligation:ids-deployed":           "inactive"
+  },
+  "permissions": {
+    "iso27001:A.5.15:permission:grant-user-system-access":                    "granted",
+    "iso27001:A.5.15:permission:grant-privileged-access":                     "granted",
+    "iso27001:A.5.12:permission:share-information-externally":                "inactive",
+    "iso27001:A.5.12:permission:share-information-externally:handling-procedures": "inactive",
+    "iso27001:A.8.5:permission:allow-remote-access":                          "inactive",
+    "iso27001:A.8.7:permission:connect-endpoint-to-internet":                 "inactive",
+    "iso27001:A.8.7:permission:connect-endpoint-to-internet:realtime-scan":   "inactive",
+    "iso27001:A.8.24:permission:store-sensitive-data-in-cloud":               "inactive",
+    "iso27001:A.8.24:permission:store-sensitive-data-in-cloud:key-management":"inactive",
+    "iso27001:A.8.20:permission:open-external-network-connection":            "inactive",
+    "iso27001:A.8.20:permission:open-external-network-connection:ids":        "inactive",
+    "iso27001:A.8.20:permission:allow-remote-access:vpn":                     "inactive"
+  }
+}
