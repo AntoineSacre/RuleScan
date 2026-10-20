@@ -751,8 +751,7 @@
             </div>
             <div class="stat-cell s-miss">
                 <div class="stat-value"
-                     th:text="${(response.missing_operands_by_rule != null ? #maps.size(response.missing_operands_by_rule) : 0)
-                               + (missingPreconditionsByRule != null ? #maps.size(missingPreconditionsByRule) : 0)}">0</div>
+                     th:text="${response.missing_operands_by_rule != null ? #maps.size(response.missing_operands_by_rule) : 0}">0</div>
                 <div class="stat-label">Missing Data</div>
             </div>
         </div>
@@ -779,7 +778,7 @@
                             th:classappend="${response.violated_rules != null and #lists.contains(response.violated_rules, r)}
                                 ? (${response.missing_operands_by_rule != null and response.missing_operands_by_rule.get(r) != null} ? 'row-warn' : 'row-bad')
                                 : (${response.active_rules != null and #lists.contains(response.active_rules, r)} ? 'row-ok'
-                                   : (${missingPreconditionsByRule != null and missingPreconditionsByRule.get(r) != null} ? 'row-warn' : 'row-na'))">
+                                   : 'row-na')">
                             <td class="id-cell"
                                 th:title="${r}"
                                 th:attr="data-tooltip=${descriptionMap != null and descriptionMap.containsKey(r) ? descriptionMap.get(r) : null}"
@@ -792,13 +791,16 @@
                                       style="color:var(--ink3);">—</span>
                             </td>
                             <td style="text-align:center;">
-                                <span th:if="${response.active_rules != null and #lists.contains(response.active_rules, r)}" class="badge badge-blue">Active</span>
+                                <span th:if="${response.active_rules != null and #lists.contains(response.active_rules, r)
+                                                               and (response.presumed_applicable_rules == null or not #lists.contains(response.presumed_applicable_rules, r))}" class="badge badge-blue">Active</span>
+                                <span th:if="${response.presumed_applicable_rules != null and #lists.contains(response.presumed_applicable_rules, r)}"
+                                      class="badge badge-amber" title="Applicability presumed: pre-condition data missing">Presumed</span>
                                 <span th:unless="${response.active_rules != null and #lists.contains(response.active_rules, r)}" class="badge badge-gray">Inactive</span>
                             </td>
                             <td>
                                 <div th:if="${response.violated_rules != null and #lists.contains(response.violated_rules, r)
                                               and response.missing_operands_by_rule != null and response.missing_operands_by_rule.get(r) != null}">
-                                    <span class="badge badge-amber">Non-compliant — missing data</span>
+                                    <span class="badge badge-amber">Non-compliant — missing evidence</span>
                                     <div class="missing-chips">
                                         <span th:each="op : ${response.missing_operands_by_rule.get(r)}" th:text="${op}" class="missing-chip"></span>
                                     </div>
@@ -809,15 +811,7 @@
                                 <span th:if="${response.active_rules != null and #lists.contains(response.active_rules, r)
                                                and (response.violated_rules == null or not #lists.contains(response.violated_rules, r))}"
                                       class="badge badge-green">Compliant</span>
-                                <div th:if="${(response.active_rules == null or not #lists.contains(response.active_rules, r))
-                                              and missingPreconditionsByRule != null and missingPreconditionsByRule.get(r) != null}">
-                                    <span class="badge badge-amber">N/A — missing data</span>
-                                    <div class="missing-chips">
-                                        <span th:each="op : ${missingPreconditionsByRule.get(r)}" th:text="${op}" class="missing-chip"></span>
-                                    </div>
-                                </div>
-                                <span th:if="${(response.active_rules == null or not #lists.contains(response.active_rules, r))
-                                               and (missingPreconditionsByRule == null or missingPreconditionsByRule.get(r) == null)}"
+                                <span th:if="${(response.active_rules == null or not #lists.contains(response.active_rules, r))}"
                                       class="badge badge-gray">N/A</span>
                             </td>
                         </tr>
@@ -848,7 +842,7 @@
                             th:classappend="${response.denied_permissions != null and #lists.contains(response.denied_permissions, p)}
                                 ? (${response.missing_operands_by_rule != null and response.missing_operands_by_rule.get(p) != null} ? 'row-warn' : 'row-bad')
                                 : (${response.active_permissions != null and #lists.contains(response.active_permissions, p)} ? 'row-ok'
-                                   : (${missingPreconditionsByRule != null and missingPreconditionsByRule.get(p) != null} ? 'row-warn' : 'row-na'))">
+                                   : 'row-na')">
                             <td class="id-cell"
                                 th:title="${p}"
                                 th:attr="data-tooltip=${descriptionMap != null and descriptionMap.containsKey(p) ? descriptionMap.get(p) : null}"
@@ -860,7 +854,7 @@
                             <td>
                                 <div th:if="${response.denied_permissions != null and #lists.contains(response.denied_permissions, p)
                                               and response.missing_operands_by_rule != null and response.missing_operands_by_rule.get(p) != null}">
-                                    <span class="badge badge-amber">Denied — missing data</span>
+                                    <span class="badge badge-amber">Denied — missing evidence</span>
                                     <div class="missing-chips">
                                         <span th:each="op : ${response.missing_operands_by_rule.get(p)}" th:text="${op}" class="missing-chip"></span>
                                     </div>
@@ -871,15 +865,7 @@
                                 <span th:if="${response.active_permissions != null and #lists.contains(response.active_permissions, p)
                                                and (response.denied_permissions == null or not #lists.contains(response.denied_permissions, p))}"
                                       class="badge badge-green">Granted</span>
-                                <div th:if="${(response.active_permissions == null or not #lists.contains(response.active_permissions, p))
-                                              and missingPreconditionsByRule != null and missingPreconditionsByRule.get(p) != null}">
-                                    <span class="badge badge-amber">N/A — missing data</span>
-                                    <div class="missing-chips">
-                                        <span th:each="op : ${missingPreconditionsByRule.get(p)}" th:text="${op}" class="missing-chip"></span>
-                                    </div>
-                                </div>
-                                <span th:if="${(response.active_permissions == null or not #lists.contains(response.active_permissions, p))
-                                               and (missingPreconditionsByRule == null or missingPreconditionsByRule.get(p) == null)}"
+                                <span th:if="${(response.active_permissions == null or not #lists.contains(response.active_permissions, p))}"
                                       class="badge badge-gray">N/A</span>
                             </td>
                         </tr>
