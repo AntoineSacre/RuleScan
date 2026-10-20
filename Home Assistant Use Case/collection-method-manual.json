@@ -1,6 +1,0 @@
-{
-  "product/has-control-access-mecanism": "false",
-  "product/availability-of-essential-function": "false",
-  "product/minimise-availability-issue-on-external-services": "true",
-  "values/appropriate-level": 3
-}
