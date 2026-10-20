@@ -1,0 +1,25 @@
+{
+  "allow": false,
+  "obligations": {
+    "iso27001:A.5.15:obligation:policy-documented":      "satisfied",
+    "iso27001:A.5.15:obligation:model":                  "satisfied",
+    "iso27001:A.5.15:obligation:least-privilege":        "satisfied",
+    "iso27001:A.5.12:obligation:classification-scheme":  "satisfied",
+    "iso27001:A.5.12:obligation:classification-levels":  "satisfied",
+    "iso27001:A.5.12:obligation:asset-owner-assigned":   "satisfied",
+    "iso27001:A.8.5:obligation:mfa-enabled":             "violated",
+    "iso27001:A.8.5:obligation:password-length":         "satisfied",
+    "iso27001:A.8.5:obligation:lockout-threshold":       "satisfied",
+    "iso27001:A.8.7:obligation:malware-deployed":        "satisfied",
+    "iso27001:A.8.7:obligation:realtime-scan":           "satisfied",
+    "iso27001:A.8.7:obligation:signature-update-interval": "satisfied",
+    "iso27001:A.8.24:obligation:symmetric-algorithm":    "inactive",
+    "iso27001:A.8.24:obligation:tls-version":            "inactive",
+    "iso27001:A.8.24:obligation:key-management-policy":  "inactive",
+    "iso27001:A.8.20:obligation:firewall":               "satisfied",
+    "iso27001:A.8.20:obligation:network-zones":          "satisfied",
+    "iso27001:A.8.20:obligation:ids-deployed":           "satisfied"
+  },
+  "basis":   { "iso27001:A.8.5:obligation:mfa-enabled": { "applicability": "presumed", "satisfaction": "missing-evidence" } },
+  "missing": { "iso27001:A.8.5:obligation:mfa-enabled": ["org/has-web-applications", "authentication/mfa-enabled"] }
+}

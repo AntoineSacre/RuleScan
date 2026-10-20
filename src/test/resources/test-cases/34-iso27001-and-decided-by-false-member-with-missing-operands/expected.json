@@ -1,0 +1,25 @@
+{
+  "allow": true,
+  "obligations": {
+    "iso27001:A.5.15:obligation:policy-documented":      "inactive",
+    "iso27001:A.5.15:obligation:model":                  "inactive",
+    "iso27001:A.5.15:obligation:least-privilege":        "inactive",
+    "iso27001:A.5.12:obligation:classification-scheme":  "inactive",
+    "iso27001:A.5.12:obligation:classification-levels":  "inactive",
+    "iso27001:A.5.12:obligation:asset-owner-assigned":   "inactive",
+    "iso27001:A.8.5:obligation:mfa-enabled":             "inactive",
+    "iso27001:A.8.5:obligation:password-length":         "inactive",
+    "iso27001:A.8.5:obligation:lockout-threshold":       "inactive",
+    "iso27001:A.8.7:obligation:malware-deployed":        "inactive",
+    "iso27001:A.8.7:obligation:realtime-scan":           "inactive",
+    "iso27001:A.8.7:obligation:signature-update-interval": "inactive",
+    "iso27001:A.8.24:obligation:symmetric-algorithm":    "inactive",
+    "iso27001:A.8.24:obligation:tls-version":            "inactive",
+    "iso27001:A.8.24:obligation:key-management-policy":  "inactive",
+    "iso27001:A.8.20:obligation:firewall":               "inactive",
+    "iso27001:A.8.20:obligation:network-zones":          "inactive",
+    "iso27001:A.8.20:obligation:ids-deployed":           "inactive"
+  },
+  "basis":   { "iso27001:A.8.5:obligation:mfa-enabled": { "applicability": "established", "satisfaction": "not-evaluated" } },
+  "missing": { "iso27001:A.8.5:obligation:mfa-enabled": [] }
+}

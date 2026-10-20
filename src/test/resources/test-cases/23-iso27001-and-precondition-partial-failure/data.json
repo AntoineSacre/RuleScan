@@ -1,0 +1,12 @@
+{
+  "operands": {
+    "org/commits-to-iso27001":     "true",
+    "org/has-information-assets":  "false",
+    "org/has-internet-access":     "false",
+    "org/has-remote-access":       "false",
+    "org/processes-personal-data": "false",
+    "org/has-cloud-services":      "false",
+    "org/has-web-applications":    "false",
+    "org/has-mobile-devices":      "false"
+  }
+}
