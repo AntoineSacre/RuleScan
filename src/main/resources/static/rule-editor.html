@@ -224,7 +224,7 @@
   <option value="product/has-digital-interface">
   <option value="product/has-available-security-updates">
   <option value="product/cybersecurity-level">
-  <option value="product/has-known-exploitable-vulns">
+  <option value="product/is-free-of-known-exploitable-vulns">
   <option value="product/has-secure-by-default-config">
   <option value="product/has-control-access-mecanism">
   <option value="product/use-encrypted-data">
@@ -268,7 +268,6 @@
     </div>
     <div class="nav-links">
       <a href="/">ENGINE</a>
-      <a href="/cra">CRA ASSESSMENT</a>
       <a href="/rule-editor.html" class="active">RULE EDITOR</a>
       <a href="/home-assistant.html">HOME ASSISTANT</a>
     </div>
@@ -413,7 +412,7 @@ const EXAMPLE_STATE = {
   rules: [
     { uid: 'cra:annex:i:p1:1', label: 'No known exploitable vulnerabilities', description: '', type: 'obligation',
       pre: [{ t: 'ref', id: 'pre:digital' }],
-      con: { l: 'product/has-known-exploitable-vulns', op: 'eq', r: 'false' } },
+      con: { l: 'product/is-free-of-known-exploitable-vulns', op: 'eq', r: 'true' } },
     { uid: 'cra:annex:i:p1:2:a', label: 'Secure by default configuration', description: '', type: 'obligation',
       pre: [{ t: 'ref', id: 'pre:digital' }],
       con: { l: 'product/has-secure-by-default-config', op: 'eq', r: 'true' } },
