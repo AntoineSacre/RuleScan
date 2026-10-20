@@ -11,6 +11,8 @@ default violated_rules := [] # List of violations (pre-conditions satsified and 
 default permissions         := []
 default active_permissions  := []
 default denied_permissions  := []
+default presumed_applicable_rules := []         # Obligations whose applicability is presumed (pre-condition data missing)
+default violations_from_missing_evidence := []  # Violations caused only by missing evidence
 
 # --- Main Entry Points ---
 
@@ -46,117 +48,80 @@ obligation_satisfied(policy, obligation) if {
     not any_predicate_failed(obligation.predicateConstraints)
 }
 
+# --- Pre-condition evaluation (three-valued) ---
+# A pre-condition evaluates to "true", "false" or "unknown" (an operand it needs is
+# missing). Groups are combined with Kleene's AND / OR: the known values decide
+# whenever they can (an AND with a false member is false, an OR with a true branch
+# is true), whatever the missing operands would be.
+
 # --- 1. Entry Point ---
-# Top-level preConditionConstraints is a list.
-# We treat it as AND across its items: ALL must be satisfied.
+# Top-level preConditionConstraints is a list, treated as an AND across its items.
+# Presumption of applicability: a rule is applicable unless its pre-conditions are
+# known to be false, so missing data never removes an obligation.
 all_preconditions_met(policy, constraints) if {
-    count(constraints) == 0
+    applicability_value(policy, constraints) != "false"
 }
 
-all_preconditions_met(policy, constraints) if {
-    count(constraints) > 0
-    not any_top_level_failed(policy, constraints)
+applicability_value(policy, constraints) := and_value([node_value(policy, n) | some n in constraints])
+
+# --- 2. Nodes, children and grandchildren (Rego forbids recursion) ---
+# A malformed node counts as false.
+default node_value(_, _) := "false"
+
+node_value(policy, n) := condition_value(policy, n.uuid) if {
+    is_leaf(n)
 }
 
-any_top_level_failed(policy, constraints) if {
-    some c in constraints
-    not is_node_satisfied(policy, c)
+node_value(policy, n) := and_value([child_value(policy, x) | some x in n.list]) if {
+    n.operator == "and"
 }
 
-# --- 2. The Node Evaluator (The "Switchboard") ---
-
-# Leaf: simple UUID
-is_node_satisfied(policy, node) if {
-    node.uuid
-    not node.operator
-    condition_satisfied(policy, node.uuid)
+node_value(policy, n) := or_value([child_value(policy, x) | some x in n.list]) if {
+    n.operator == "or"
 }
 
-# AND group: no child failed
-is_node_satisfied(policy, node) if {
-    node.operator == "and"
-    not any_child_in_and_failed(policy, node.list)
+default child_value(_, _) := "false"
+
+child_value(policy, n) := condition_value(policy, n.uuid) if {
+    is_leaf(n)
 }
 
-# OR group: at least one child satisfied
-is_node_satisfied(policy, node) if {
-    node.operator == "or"
-    some ch in node.list
-    is_child_satisfied(policy, ch)
+child_value(policy, n) := and_value([grandchild_value(policy, x) | some x in n.list]) if {
+    n.operator == "and"
 }
 
-# --- 3. The Child Layer (Breaking the direct recursion) ---
-
-# Child leaf: UUID
-is_child_satisfied(policy, child) if {
-    child.uuid
-    not child.operator
-    condition_satisfied(policy, child.uuid)
+child_value(policy, n) := or_value([grandchild_value(policy, x) | some x in n.list]) if {
+    n.operator == "or"
 }
 
-# Child AND group
-is_child_satisfied(policy, child) if {
-    child.operator == "and"
-    not any_grandchild_failed(policy, child.list)
+# Grandchild groups contain leaves only (their AND now requires all members)
+default grandchild_value(_, _) := "false"
+
+grandchild_value(policy, n) := condition_value(policy, n.uuid) if {
+    is_leaf(n)
 }
 
-# Child OR group
-is_child_satisfied(policy, child) if {
-    child.operator == "or"
-    some gc in child.list
-    is_grandchild_satisfied(policy, gc)
+grandchild_value(policy, n) := and_value([condition_value(policy, x.uuid) | some x in n.list]) if {
+    n.operator == "and"
 }
 
-# --- 4. Failure Detectors ---
-
-any_child_in_and_failed(policy, lst) if {
-    some child in lst
-    not is_child_satisfied(policy, child)
+grandchild_value(policy, n) := or_value([condition_value(policy, x.uuid) | some x in n.list]) if {
+    n.operator == "or"
 }
 
-# For the grandchild layer, support both UUID leaves and nested groups
-any_grandchild_failed(policy, lst) if {
-    some gc in lst
-    not is_grandchild_satisfied(policy, gc)
+is_leaf(n) if {
+    n.uuid
+    not n.operator
 }
 
-# --- 5. Grandchild evaluation ---
-
-# Grandchild leaf
-is_grandchild_satisfied(policy, gc) if {
-    gc.uuid
-    not gc.operator
-    condition_satisfied(policy, gc.uuid)
-}
-
-# Grandchild AND group
-is_grandchild_satisfied(policy, gc) if {
-    gc.operator == "and"
-    some x in gc.list
-        condition_satisfied(policy, x.uuid)
-}
-
-# Grandchild OR group
-is_grandchild_satisfied(policy, gc) if {
-    gc.operator == "or"
-    some x in gc.list
-    condition_satisfied(policy, x.uuid)
-}
-
-
-
-
-# Return true if at least one precondition fails
-any_precondition_failed(policy, constraints) if {
-    some constraint in constraints
-    not condition_satisfied(policy, constraint.uuid)
-}
-
-# Return true if at least a description is found for a precondition ID
-# And that all its constraint passed
-condition_satisfied(policy, cond_u_id) if {
+# --- 3. Pre-conditions ---
+# Value of a pre-condition (its predicates form an AND). An unknown ID counts as false.
+condition_value(policy, cond_u_id) := preds_value(cond.predicateConstraints) if {
     cond := find_precondition(policy, cond_u_id)
-    not any_predicate_failed(cond.predicateConstraints)
+}
+
+condition_value(policy, cond_u_id) := "false" if {
+    not find_precondition(policy, cond_u_id)
 }
 
 # Return true if a description is found for a precondition ID
@@ -169,28 +134,85 @@ find_precondition(policy, u_id) := cond_item if {
 
 # --- Predicate Evaluation ---
 
-# Return true if all constraints are satisfied
-any_predicate_failed(constraints) if {
-    some c in constraints
-    left := object.get(input.operands, c.leftOperand, null)   # this line find the value, in the data, for a precise operand  "c.leftOperand" (it is a key from a dictionnary)
-    right := resolve_value(c.rightOperand)  # this line call a function to find value of right operand
+# A predicate evaluates to "true", "false" or "unknown". It is unknown when its left
+# operand is absent from the input: absence is missing data, whereas false, 0 or ""
+# are real values. Operands in the "request/" namespace describe the requested
+# operation and follow a closed-world assumption: an absent request is false.
+present(key) if {
+    key in object.keys(input.operands)
+}
 
-    # evaluate left/right and return false if something is missing or unsatisfied
-    not_satisfied(left, right, c.operator)
+is_request_operand(key) if {
+    startswith(key, "request/")
+}
+
+predicate_value(c) := "unknown" if {
+    not present(c.leftOperand)
+    not is_request_operand(c.leftOperand)
+}
+
+predicate_value(c) := "false" if {
+    not present(c.leftOperand)
+    is_request_operand(c.leftOperand)
+}
+
+predicate_value(c) := "true" if {
+    present(c.leftOperand)
+    compare(input.operands[c.leftOperand], c.operator, resolve_value(c.rightOperand))
+}
+
+predicate_value(c) := "false" if {
+    present(c.leftOperand)
+    not compare(input.operands[c.leftOperand], c.operator, resolve_value(c.rightOperand))
+}
+
+# A list of predicates is an AND
+preds_value(constraints) := and_value([predicate_value(c) | some c in constraints])
+
+# Kleene AND / OR (an empty AND is true, an empty OR is false)
+and_value(vals) := "false" if {
+    "false" in vals
+}
+
+and_value(vals) := "unknown" if {
+    not "false" in vals
+    "unknown" in vals
+}
+
+and_value(vals) := "true" if {
+    not "false" in vals
+    not "unknown" in vals
+}
+
+or_value(vals) := "true" if {
+    "true" in vals
+}
+
+or_value(vals) := "unknown" if {
+    not "true" in vals
+    "unknown" in vals
+}
+
+or_value(vals) := "false" if {
+    not "true" in vals
+    not "unknown" in vals
+}
+
+# Return true if the constraints are not known to be satisfied: a predicate is false,
+# or an operand is missing (missing data never makes an obligation pass)
+any_predicate_failed(constraints) if {
+    preds_value(constraints) != "true"
 }
 
 # Two possibilities to resolve the value of right : with a key like leftOperand or with a direct value
 resolve_value(op) := val if {
+    present(op)
     val := input.operands[op]
 }
-resolve_value(op) := op if {
-    not input.operands[op]
-}
 
-# Evaluation fails if missing data or comparison is false
-not_satisfied(l, r, op) if not l                    # fail if miss the left
-not_satisfied(l, r, op) if not r                    # fail if miss the right
-not_satisfied(l, r, op) if not compare(l, op, r)    # fail if unsatisfied
+resolve_value(op) := op if {
+    not present(op)
+}
 
 # --- Definition of operators ---
 compare(left, "is", right) := true if {left == right}
@@ -246,20 +268,120 @@ denied_permissions := { o.uuid |
     any_predicate_failed(o.predicateConstraints)
 }
 
+# --- Evidence Basis ---
+# applicability: "established" (decided by known values) or "presumed" (undecided,
+# presumed applicable). satisfaction: "established", "missing-evidence" (undecided,
+# counted as not satisfied) or "not-evaluated" (rule not applicable).
+
+applicability_basis(policy, r) := "presumed" if {
+    applicability_value(policy, r.preConditionConstraints) == "unknown"
+}
+
+applicability_basis(policy, r) := "established" if {
+    applicability_value(policy, r.preConditionConstraints) != "unknown"
+}
+
+satisfaction_basis(policy, r) := "not-evaluated" if {
+    not all_preconditions_met(policy, r.preConditionConstraints)
+}
+
+satisfaction_basis(policy, r) := "missing-evidence" if {
+    all_preconditions_met(policy, r.preConditionConstraints)
+    preds_value(r.predicateConstraints) == "unknown"
+}
+
+satisfaction_basis(policy, r) := "established" if {
+    all_preconditions_met(policy, r.preConditionConstraints)
+    preds_value(r.predicateConstraints) != "unknown"
+}
+
+rule_basis[o.uuid] := {"applicability": applicability_basis(policy, o), "satisfaction": satisfaction_basis(policy, o)} if {
+    policy := find_policy_by_id(input.transactionId)
+    some rules in policy.set
+    some o in rules.obligations
+}
+
+permission_basis[o.uuid] := {"applicability": applicability_basis(policy, o), "satisfaction": satisfaction_basis(policy, o)} if {
+    policy := find_policy_by_id(input.transactionId)
+    some rules in policy.set
+    some o in rules.permissions
+}
+
+# Obligations whose applicability is presumed for lack of pre-condition data
+presumed_applicable_rules := {u | some u, b in rule_basis; b.applicability == "presumed"}
+
+# Violations caused only by missing evidence (no predicate is known to fail)
+violations_from_missing_evidence := {u | some u in violated_rules; rule_basis[u].satisfaction == "missing-evidence"}
+
 # --- Missing Data Detection ---
-# Maps rule/permission UUID → set of predicate leftOperand keys that are absent from input.
-# Only fires for active rules (preconditions met) so missing preCondition operands are never flagged.
+# Maps rule/permission UUID → missing operands that leave its applicability or its
+# satisfaction undecided. Operands in branches already decided by known values
+# (an AND with a false member, an OR with a true branch) are not reported.
 
 missing_operands_by_rule[uuid] := operands if {
     policy := find_policy_by_id(input.transactionId)
     some ruleset in policy.set
     some track in ["obligations", "permissions"]
     some o in ruleset[track]
-    all_preconditions_met(policy, o.preConditionConstraints)
     uuid := o.uuid
-    operands := { pred.leftOperand |
-        some pred in o.predicateConstraints
-        not input.operands[pred.leftOperand]
-    }
+    operands := applicability_missing(policy, o.preConditionConstraints) | satisfaction_missing(policy, o)
     count(operands) > 0
+}
+
+applicability_missing(policy, constraints) := union({node_missing(policy, n) | some n in constraints; node_value(policy, n) == "unknown"}) if {
+    applicability_value(policy, constraints) == "unknown"
+}
+
+applicability_missing(policy, constraints) := set() if {
+    applicability_value(policy, constraints) != "unknown"
+}
+
+satisfaction_missing(policy, o) := preds_missing(o.predicateConstraints) if {
+    all_preconditions_met(policy, o.preConditionConstraints)
+}
+
+satisfaction_missing(policy, o) := set() if {
+    not all_preconditions_met(policy, o.preConditionConstraints)
+}
+
+# Missing operands of a list of predicates, only if they leave it undecided
+preds_missing(constraints) := {c.leftOperand | some c in constraints; predicate_value(c) == "unknown"} if {
+    preds_value(constraints) == "unknown"
+}
+
+preds_missing(constraints) := set() if {
+    preds_value(constraints) != "unknown"
+}
+
+condition_missing(policy, cond_u_id) := preds_missing(cond.predicateConstraints) if {
+    cond := find_precondition(policy, cond_u_id)
+}
+
+condition_missing(policy, cond_u_id) := set() if {
+    not find_precondition(policy, cond_u_id)
+}
+
+# In an undecided group, only the undecided members are reported
+node_missing(policy, n) := condition_missing(policy, n.uuid) if {
+    is_leaf(n)
+}
+
+node_missing(policy, n) := union({child_missing(policy, x) | some x in n.list; child_value(policy, x) == "unknown"}) if {
+    n.operator in {"and", "or"}
+}
+
+child_missing(policy, n) := condition_missing(policy, n.uuid) if {
+    is_leaf(n)
+}
+
+child_missing(policy, n) := union({grandchild_missing(policy, x) | some x in n.list; grandchild_value(policy, x) == "unknown"}) if {
+    n.operator in {"and", "or"}
+}
+
+grandchild_missing(policy, n) := condition_missing(policy, n.uuid) if {
+    is_leaf(n)
+}
+
+grandchild_missing(policy, n) := union({condition_missing(policy, x.uuid) | some x in n.list; condition_value(policy, x.uuid) == "unknown"}) if {
+    n.operator in {"and", "or"}
 }
